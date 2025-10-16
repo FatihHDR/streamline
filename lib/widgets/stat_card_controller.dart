@@ -27,7 +27,6 @@ class _StatCardControllerState extends State<StatCardController>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
   late Animation<double> _fadeAnimation;
 
   @override
@@ -45,14 +44,6 @@ class _StatCardControllerState extends State<StatCardController>
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: Curves.elasticOut,
-    ));
-
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
     ));
 
     _fadeAnimation = Tween<double>(
