@@ -5,7 +5,6 @@ import '../models/stock_item.dart';
 import '../widgets/stat_card_animated.dart';
 import '../widgets/stock_chart_animated.dart';
 import '../widgets/low_stock_alert_animated.dart';
-import '../widgets/streamline_logo.dart';
 
 class DashboardAnimatedContainer extends StatefulWidget {
   const DashboardAnimatedContainer({super.key});
@@ -76,9 +75,13 @@ class _DashboardAnimatedContainerState extends State<DashboardAnimatedContainer>
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(_isExpanded ? 12 : 8),
                         ),
-                        child: StreamlineLogo(
-                          size: _isExpanded ? 32 : 24,
-                          color: Colors.white,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: _isExpanded ? 32 : 24,
+                            height: _isExpanded ? 32 : 24,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),

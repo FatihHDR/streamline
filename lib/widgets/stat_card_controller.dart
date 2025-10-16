@@ -102,6 +102,7 @@ class _StatCardControllerState extends State<StatCardController>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,7 +123,7 @@ class _StatCardControllerState extends State<StatCardController>
                         child: Icon(
                           widget.icon,
                           color: widget.color,
-                          size: 24,
+                          size: 20,
                         ),
                       ),
                     ),
@@ -155,30 +156,32 @@ class _StatCardControllerState extends State<StatCardController>
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                ScaleTransition(
-                  scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: _controller,
-                      curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
+                const SizedBox(height: 4),
+                Flexible(
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.5, end: 1.0).animate(
+                      CurvedAnimation(
+                        parent: _controller,
+                        curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    widget.value,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: widget.color,
+                    child: Text(
+                      widget.value,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: widget.color,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppTheme.textSecondary,
                     ),
                   ),

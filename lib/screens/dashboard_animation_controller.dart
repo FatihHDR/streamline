@@ -5,7 +5,6 @@ import '../models/stock_item.dart';
 import '../widgets/stat_card_controller.dart';
 import '../widgets/stock_chart_controller.dart';
 import '../widgets/low_stock_alert_controller.dart';
-import '../widgets/streamline_logo.dart';
 
 class DashboardAnimationController extends StatefulWidget {
   const DashboardAnimationController({super.key});
@@ -151,9 +150,13 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const StreamlineLogo(
-                            size: 32,
-                            color: Colors.white,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
