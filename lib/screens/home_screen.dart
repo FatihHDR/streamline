@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
-import '../models/stock_item.dart';
 import '../widgets/animation_mode_selector.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
@@ -44,12 +42,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.warehouse_rounded, size: 28),
-            SizedBox(width: 8),
-            Text('Streamline'),
+            ClipOval(
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Streamline'),
           ],
         ),
         actions: [

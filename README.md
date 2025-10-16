@@ -1,8 +1,21 @@
 # Streamline - Aplikasi Manajemen Stok Gudang
 
-![Streamline Logo](https://img.shields.io/badge/Streamline-Warehouse%20Management-5F6C7B?style=for-the-badge)
+<div align="center">
+  <img src="https://img.shields.io/badge/Streamline-Warehouse%20Management-5F6C7B?style=for-the-badge" alt="Streamline Badge"/>
+  <br/>
+  <p><i>Modern warehouse inventory management with beautiful animations</i></p>
+</div>
 
-Aplikasi mobile modern untuk manajemen stok barang gudang yang dibangun dengan Flutter. Streamline menyediakan solusi digital yang efisien dengan tampilan interaktif dan animasi yang halus.
+Aplikasi mobile modern untuk manajemen stok barang gudang yang dibangun dengan Flutter. Streamline menyediakan solusi digital yang efisien dengan tampilan interaktif, animasi yang halus, dan logo custom yang unik.
+
+## 🎨 Logo & Branding
+
+Aplikasi ini menggunakan **logo custom** berupa huruf "S" dengan desain curved yang stylish, diimplementasikan dengan `CustomPainter` untuk performa optimal. Logo tersedia dalam dua varian:
+
+- **StreamlineLogo**: Logo statis untuk AppBar dan header
+- **AnimatedStreamlineLogo**: Logo dengan animasi draw yang smooth
+
+Logo mencerminkan identitas Streamline yang modern dan profesional dengan desain yang clean dan memorable.
 
 ## 🎯 Fitur Utama
 
@@ -119,6 +132,7 @@ lib/
 │   └── app_theme.dart                # Tema & konstanta warna
 └── widgets/
     ├── animation_mode_selector.dart   # Selector mode animasi
+    ├── streamline_logo.dart           # Custom logo widget
     ├── stat_card_animated.dart        # Card statistik (AnimatedContainer)
     ├── stat_card_controller.dart      # Card statistik (AnimationController)
     ├── stock_chart_animated.dart      # Chart (AnimatedContainer)

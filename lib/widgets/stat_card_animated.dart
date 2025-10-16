@@ -55,6 +55,7 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -69,7 +70,7 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
                     child: Icon(
                       widget.icon,
                       color: widget.color,
-                      size: _isHovered ? 28 : 24,
+                      size: _isHovered ? 24 : 20,
                     ),
                   ),
                   if (widget.trend != null)
@@ -102,21 +103,23 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: TextStyle(
-                  fontSize: _isHovered ? 28 : 24,
-                  fontWeight: FontWeight.bold,
-                  color: _isHovered ? widget.color : AppTheme.textPrimary,
-                ),
-                child: Text(widget.value),
-              ),
               const SizedBox(height: 4),
+              Flexible(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 300),
+                  style: TextStyle(
+                    fontSize: _isHovered ? 24 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: _isHovered ? widget.color : AppTheme.textPrimary,
+                  ),
+                  child: Text(widget.value),
+                ),
+              ),
+              const SizedBox(height: 2),
               Text(
                 widget.title,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: AppTheme.textSecondary,
                   fontWeight: _isHovered ? FontWeight.w600 : FontWeight.normal,
                 ),
