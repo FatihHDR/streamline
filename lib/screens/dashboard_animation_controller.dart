@@ -36,7 +36,6 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
     
     // Header animation controller
     _headerController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
