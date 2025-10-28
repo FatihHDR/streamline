@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Warna berdasarkan logo Streamline (slate gray theme)
-  static const Color primaryColor = Color(0xFF5F6C7B); // Slate gray dari logo
-  static const Color primaryDark = Color(0xFF4A5568);
-  static const Color primaryLight = Color(0xFF8B95A5);
-  static const Color accentColor = Color(0xFF7C8A99);
-  
-  static const Color backgroundColor = Color(0xFFF5F7FA);
+  // Modernized palette based on existing slate tones with a cooler accent
+  static const Color primaryColor = Color(0xFF405A72); // slightly deeper slate
+  static const Color primaryVariant = Color(0xFF2E4A5F);
+  static const Color accentColor = Color(0xFF6AB0C8); // cool cyan accent
+
+  static const Color backgroundColor = Color(0xFFF6F7FB);
   static const Color cardColor = Color(0xFFFFFFFF);
-  static const Color textPrimary = Color(0xFF2D3748);
-  static const Color textSecondary = Color(0xFF718096);
+  static const Color textPrimary = Color(0xFF1F2933);
+  static const Color textSecondary = Color(0xFF6B7280);
   
   // Status colors
   static const Color successColor = Color(0xFF48BB78);
@@ -28,33 +27,43 @@ class AppTheme {
         primary: primaryColor,
         secondary: accentColor,
         surface: cardColor,
+        background: backgroundColor,
         error: dangerColor,
       ),
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+      // Typography: modern, slightly larger headings
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: textPrimary),
+        bodyLarge: TextStyle(fontSize: 14, color: textPrimary),
+        bodyMedium: TextStyle(fontSize: 13, color: textSecondary),
+      ),
       appBarTheme: AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        foregroundColor: primaryColor,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         titleTextStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
         ),
+        iconTheme: const IconThemeData(color: primaryColor),
       ),
       cardTheme: CardThemeData(
         color: cardColor,
-        elevation: 2,
+        elevation: 6,
+        shadowColor: Colors.black.withOpacity(0.08),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -65,18 +74,20 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryLight),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryVariant.withOpacity(0.08)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: primaryLight.withOpacity(0.5)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryVariant.withOpacity(0.06)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
       ),
     );
   }
@@ -88,7 +99,7 @@ class AppTheme {
       primaryColor: primaryColor,
       scaffoldBackgroundColor: const Color(0xFF1A202C),
       colorScheme: ColorScheme.dark(
-        primary: primaryLight,
+        primary: primaryVariant,
         secondary: accentColor,
         surface: const Color(0xFF2D3748),
         error: dangerColor,

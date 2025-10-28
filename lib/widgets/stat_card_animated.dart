@@ -26,7 +26,10 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
+  final theme = Theme.of(context);
+  final onSurface = theme.colorScheme.onSurface; // reliable text color for surface
+
+  return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
@@ -36,23 +39,21 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: _isHovered ? widget.color.withOpacity(0.1) : Colors.white,
+            color: _isHovered ? widget.color.withOpacity(0.06) : theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(_isHovered ? 16 : 12),
             border: Border.all(
-              color: _isHovered ? widget.color : Colors.grey.shade200,
-              width: _isHovered ? 2 : 1,
+              color: _isHovered ? widget.color.withOpacity(0.6) : theme.dividerColor.withOpacity(0.6),
+              width: _isHovered ? 1.5 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: _isHovered
-                    ? widget.color.withOpacity(0.3)
-                    : Colors.grey.withOpacity(0.1),
-                blurRadius: _isHovered ? 12 : 6,
-                offset: Offset(0, _isHovered ? 6 : 3),
+                color: Colors.black.withOpacity(_isHovered ? 0.08 : 0.03),
+                blurRadius: _isHovered ? 14 : 8,
+                offset: Offset(0, _isHovered ? 8 : 4),
               ),
             ],
           ),
-          child: Column(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             mainAxisSize: MainAxisSize.min,
@@ -67,61 +68,67 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
                       color: widget.color.withOpacity(_isHovered ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(_isHovered ? 12 : 8),
                     ),
-                    child: Icon(
-                      widget.icon,
-                      color: widget.color,
-                      size: _isHovered ? 24 : 20,
-                    ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.color,
+                        size: _isHovered ? 24 : 20,
+                      ),
                   ),
                   if (widget.trend != null)
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
                       opacity: _isHovered ? 1.0 : 0.6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: widget.trend!.startsWith('+')
-                              ? AppTheme.successColor.withOpacity(0.2)
-                              : widget.trend!.startsWith('-')
-                                  ? AppTheme.dangerColor.withOpacity(0.2)
-                                  : Colors.grey.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          widget.trend!,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
                             color: widget.trend!.startsWith('+')
-                                ? AppTheme.successColor
+                                ? AppTheme.successColor.withOpacity(0.14)
                                 : widget.trend!.startsWith('-')
-                                    ? AppTheme.dangerColor
-                                    : Colors.grey,
+                                    ? AppTheme.dangerColor.withOpacity(0.14)
+                                    : Colors.grey.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            widget.trend!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: widget.trend!.startsWith('+')
+                                  ? AppTheme.successColor
+                                  : widget.trend!.startsWith('-')
+                                      ? AppTheme.dangerColor
+                                      : Colors.grey,
+                            ),
                           ),
                         ),
-                      ),
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
+              // Value (primary numeric) - ensure strong contrast
               Flexible(
                 child: AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: TextStyle(
                     fontSize: _isHovered ? 24 : 20,
-                    fontWeight: FontWeight.bold,
-                    color: _isHovered ? widget.color : AppTheme.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    color: _isHovered ? widget.color : onSurface,
                   ),
-                  child: Text(widget.value),
+                  child: Text(
+                    widget.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
+              // Title / label
               Text(
                 widget.title,
                 style: TextStyle(
-                  fontSize: 11,
-                  color: AppTheme.textSecondary,
-                  fontWeight: _isHovered ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 12,
+                  color: theme.textTheme.bodyMedium?.color ?? AppTheme.textSecondary,
+                  fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
             ],

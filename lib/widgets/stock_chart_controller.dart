@@ -149,14 +149,14 @@ class _StockChartControllerState extends State<StockChartController>
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: isSelected
-                                          ? [
-                                              AppTheme.primaryColor,
-                                              AppTheme.primaryDark,
-                                            ]
-                                          : [
-                                              AppTheme.primaryLight,
-                                              AppTheme.primaryColor,
-                                            ],
+                                            ? [
+                                                AppTheme.primaryColor,
+                                                AppTheme.primaryVariant,
+                                              ]
+                                            : [
+                                                AppTheme.accentColor.withOpacity(0.9),
+                                                AppTheme.primaryColor.withOpacity(0.9),
+                                              ],
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                     ),

@@ -89,11 +89,11 @@ class _StockChartAnimatedState extends State<StockChartAnimated> {
                                   colors: isSelected
                                       ? [
                                           AppTheme.primaryColor,
-                                          AppTheme.primaryDark,
+                                          AppTheme.primaryVariant,
                                         ]
                                       : [
-                                          AppTheme.primaryLight,
-                                          AppTheme.primaryColor,
+                                          AppTheme.accentColor.withOpacity(0.9),
+                                          AppTheme.primaryColor.withOpacity(0.9),
                                         ],
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,

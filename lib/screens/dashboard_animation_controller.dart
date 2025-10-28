@@ -101,6 +101,8 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
 
   @override
   Widget build(BuildContext context) {
+  final bottomInset = MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight;
+
     return RefreshIndicator(
       onRefresh: () async {
         await Future.delayed(const Duration(seconds: 1));
@@ -110,7 +112,8 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+  // Add extra buffer to ensure content doesn't overflow under the bottom nav
+  padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -123,10 +126,7 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.primaryDark,
-                      ],
+                      colors: [AppTheme.primaryColor, AppTheme.primaryVariant],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

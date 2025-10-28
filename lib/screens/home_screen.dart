@@ -41,31 +41,77 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.cover,
+      // Custom modern header
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(84),
+        child: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.backgroundColor, Colors.white],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
+              // subtle bottom border radius to blend into content
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            const Text('Streamline'),
-          ],
-        ),
-        actions: [
-          AnimationModeSelector(
-            currentMode: _animationMode,
-            onModeChanged: _onAnimationModeChanged,
+            child: Row(
+              children: [
+                ClipOval(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text('Streamline', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    SizedBox(height: 2),
+                    Text('Dashboard', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                  ],
+                ),
+                const SizedBox(width: 18),
+                // Search / quick filter
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    alignment: Alignment.center,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Cari produk, kode, atau kategori',
+                        prefixIcon: const Icon(Icons.search),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                AnimationModeSelector(
+                  currentMode: _animationMode,
+                  onModeChanged: _onAnimationModeChanged,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
-        ],
+        ),
       ),
-      body: _getSelectedScreen(),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: _getSelectedScreen(),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
