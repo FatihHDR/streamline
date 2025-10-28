@@ -40,10 +40,12 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: _isHovered ? widget.color.withOpacity(0.06) : theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(_isHovered ? 16 : 12),
+            // Keep border radius stable to avoid subtle layout reflows
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: _isHovered ? widget.color.withOpacity(0.6) : theme.dividerColor.withOpacity(0.6),
-              width: _isHovered ? 1.5 : 1,
+              // Keep border width constant to prevent layout shifts
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
@@ -63,16 +65,21 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
                 children: [
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: EdgeInsets.all(_isHovered ? 10 : 8),
+                    // fixed padding so the outer layout doesn't change on hover/tap
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: widget.color.withOpacity(_isHovered ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(_isHovered ? 12 : 8),
+                      color: widget.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    child: AnimatedScale(
+                      scale: _isHovered ? 1.15 : 1.0,
+                      duration: const Duration(milliseconds: 200),
                       child: Icon(
                         widget.icon,
                         color: widget.color,
-                        size: _isHovered ? 24 : 20,
+                        size: 20,
                       ),
+                    ),
                   ),
                   if (widget.trend != null)
                     AnimatedOpacity(
@@ -108,10 +115,11 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
               // Value (primary numeric) - ensure strong contrast
               Flexible(
                 child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    fontSize: _isHovered ? 24 : 20,
-                    fontWeight: FontWeight.w800,
+                    // stabilize font size to avoid layout jumps when tapped
+                    fontSize: 20,
+                    fontWeight: _isHovered ? FontWeight.w800 : FontWeight.w700,
                     color: _isHovered ? widget.color : onSurface,
                   ),
                   child: Text(

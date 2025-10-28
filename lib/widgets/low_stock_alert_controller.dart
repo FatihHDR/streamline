@@ -90,21 +90,22 @@ class _LowStockAlertControllerState extends State<LowStockAlertController>
             onTap: _toggleExpand,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   ScaleTransition(
                     scale: _pulseAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.warningColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppTheme.warningColor.withOpacity(0.16),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.warning_amber_rounded,
                         color: AppTheme.warningColor,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -121,6 +122,7 @@ class _LowStockAlertControllerState extends State<LowStockAlertController>
                             color: AppTheme.textPrimary,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           '${widget.lowStockItems.length} item memerlukan perhatian',
                           style: const TextStyle(
@@ -145,14 +147,17 @@ class _LowStockAlertControllerState extends State<LowStockAlertController>
               ),
             ),
           ),
-          SizeTransition(
-            sizeFactor: _expandAnimation,
-            child: Column(
-              children: widget.lowStockItems.asMap().entries.map((entry) {
-                int index = entry.key;
-                StockItem item = entry.value;
-                return _buildLowStockItem(item, index);
-              }).toList(),
+          // ClipRect and SizeTransition to avoid overflow during animations
+          ClipRect(
+            child: SizeTransition(
+              sizeFactor: _expandAnimation,
+              child: Column(
+                children: widget.lowStockItems.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  StockItem item = entry.value;
+                  return _buildLowStockItem(item, index);
+                }).toList(),
+              ),
             ),
           ),
         ],

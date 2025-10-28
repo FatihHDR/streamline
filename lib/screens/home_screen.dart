@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../utils/app_theme.dart';
+import '../data/dummy_data.dart';
 import '../widgets/animation_mode_selector.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
 import 'stock_list_screen.dart';
+import 'add_item_modal.dart';
 import 'transaction_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  AnimationMode _animationMode = AnimationMode.animatedContainer;
+  AnimationMode _animationMode = AnimationMode.animationController;
 
   void _onAnimationModeChanged(AnimationMode mode) {
     setState(() {
@@ -40,7 +42,60 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lowStockCount = DummyData.stockItems.where((i) => i.isLowStock).length;
+
+    Widget _navIcon(IconData icon, {int? badgeCount}) {
+      if (badgeCount == null || badgeCount == 0) return Icon(icon);
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(icon),
+          Positioned(
+            right: -6,
+            top: -6,
+            child: Container(
+              padding: badgeCount > 1 ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: badgeCount > 0 ? AppTheme.warningColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4),
+                ],
+              ),
+              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+              child: Center(
+                child: Text(
+                  badgeCount > 1 ? '$badgeCount' : '',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          // Open modal bottom sheet to add item. If an item was added (true), switch to stock list.
+          final result = await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (ctx) => const AddItemModal(),
+          );
+          if (result == true) {
+            setState(() {
+              _selectedIndex = 1;
+            });
+          }
+        },
+        label: const Text('Tambah Barang'),
+        icon: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       // Custom modern header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(84),
@@ -121,20 +176,20 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         backgroundColor: AppTheme.cardColor,
         indicatorColor: AppTheme.primaryColor.withOpacity(0.2),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
+            icon: _navIcon(Icons.dashboard_outlined),
+            selectedIcon: _navIcon(Icons.dashboard),
             label: 'Dashboard',
           ),
           NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
+            icon: _navIcon(Icons.inventory_2_outlined, badgeCount: lowStockCount),
+            selectedIcon: _navIcon(Icons.inventory_2, badgeCount: lowStockCount),
             label: 'Stok Barang',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
+            icon: _navIcon(Icons.history_outlined),
+            selectedIcon: _navIcon(Icons.history),
             label: 'Riwayat',
           ),
         ],

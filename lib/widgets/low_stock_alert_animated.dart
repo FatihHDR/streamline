@@ -44,20 +44,20 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
             },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    padding: const EdgeInsets.all(8),
+                  Container(
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: AppTheme.warningColor.withOpacity(_isExpanded ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppTheme.warningColor.withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.warning_amber_rounded,
                       color: AppTheme.warningColor,
-                      size: _isExpanded ? 24 : 20,
+                      size: 20,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -73,6 +73,7 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
                             color: AppTheme.textPrimary,
                           ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           '${widget.lowStockItems.length} item memerlukan perhatian',
                           style: const TextStyle(
@@ -95,16 +96,20 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
               ),
             ),
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-            child: _isExpanded
-                ? Column(
-                    children: widget.lowStockItems.map((item) {
-                      return _buildLowStockItem(item);
-                    }).toList(),
-                  )
-                : const SizedBox.shrink(),
+
+          // ClipRect prevents children from briefly overflowing during AnimatedSize
+          ClipRect(
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Column(
+                      children: widget.lowStockItems.map((item) {
+                        return _buildLowStockItem(item);
+                      }).toList(),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ),
         ],
       ),
@@ -133,12 +138,13 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: isOutOfStock
                     ? AppTheme.dangerColor.withOpacity(0.1)
                     : AppTheme.warningColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 isOutOfStock ? Icons.error_outline : Icons.inventory_2_outlined,
@@ -153,15 +159,19 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
                 children: [
                   Text(
                     item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     '${item.location} • ${item.category}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 11,
                       color: AppTheme.textSecondary,
@@ -170,6 +180,7 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
                 ],
               ),
             ),
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -186,6 +197,26 @@ class _LowStockAlertAnimatedState extends State<LowStockAlertAnimated> {
                   style: TextStyle(
                     fontSize: 10,
                     color: isOutOfStock ? AppTheme.dangerColor : AppTheme.warningColor,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 28,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                      minimumSize: const Size(0, 28),
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.06),
+                      foregroundColor: AppTheme.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: () {
+                      // Placeholder action: navigate to stock detail or reorder
+                      // Implement actual action as needed
+                    },
+                    child: const Text('Tindak', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],

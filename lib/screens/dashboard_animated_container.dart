@@ -107,18 +107,7 @@ class _DashboardAnimatedContainerState extends State<DashboardAnimatedContainer>
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isExpanded = !_isExpanded;
-                          });
-                        },
-                        icon: AnimatedRotation(
-                          turns: _isExpanded ? 0.5 : 0,
-                          duration: const Duration(milliseconds: 300),
-                          child: const Icon(Icons.expand_more, color: Colors.white),
-                        ),
-                      ),
+                      // Expand button removed per design — header expansion controlled by pull-to-refresh only
                     ],
                   ),
                   if (_isExpanded) ...[

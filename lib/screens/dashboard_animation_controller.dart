@@ -34,8 +34,9 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
   void initState() {
     super.initState();
     
-    // Header animation controller
+    // Header animation controller (set duration so animations run)
     _headerController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
