@@ -44,58 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final lowStockCount = DummyData.stockItems.where((i) => i.isLowStock).length;
 
-    Widget _navIcon(IconData icon, {int? badgeCount}) {
-      if (badgeCount == null || badgeCount == 0) return Icon(icon);
-      return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Icon(icon),
-          Positioned(
-            right: -6,
-            top: -6,
-            child: Container(
-              padding: badgeCount > 1 ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: badgeCount > 0 ? AppTheme.warningColor : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4),
-                ],
-              ),
-              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-              child: Center(
-                child: Text(
-                  badgeCount > 1 ? '$badgeCount' : '',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
+    // navigation icon helper removed — custom BottomAppBar is used instead
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          // Open modal bottom sheet to add item. If an item was added (true), switch to stock list.
-          final result = await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            builder: (ctx) => const AddItemModal(),
-          );
-          if (result == true) {
-            setState(() {
-              _selectedIndex = 1;
-            });
-          }
-        },
-        label: const Text('Tambah Barang'),
-        icon: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      extendBody: true,
       // Custom modern header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(84),
@@ -167,32 +118,136 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: _getSelectedScreen(),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        backgroundColor: AppTheme.cardColor,
-        indicatorColor: AppTheme.primaryColor.withOpacity(0.2),
-        destinations: [
-          NavigationDestination(
-            icon: _navIcon(Icons.dashboard_outlined),
-            selectedIcon: _navIcon(Icons.dashboard),
-            label: 'Dashboard',
+      bottomNavigationBar: BottomAppBar(
+        color: AppTheme.cardColor,
+        elevation: 8,
+        child: SafeArea(
+          child: SizedBox(
+            height: kBottomNavigationBarHeight,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Dashboard
+                _buildNavItem(
+                  index: 0,
+                  icon: Icons.dashboard_outlined,
+                  activeIcon: Icons.dashboard,
+                  label: 'Dashboard',
+                ),
+
+                // Stok Barang (with badge)
+                _buildNavItem(
+                  index: 1,
+                  icon: Icons.inventory_2_outlined,
+                  activeIcon: Icons.inventory_2,
+                  label: 'Stok',
+                  badgeCount: lowStockCount,
+                ),
+
+                // Center add button as part of the nav bar
+                SizedBox(
+                  width: 80,
+                  child: Center(
+                    child: InkWell(
+                      onTap: () async {
+                        final result = await showModalBottomSheet<bool>(
+                          context: context,
+                          isScrollControlled: true,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          ),
+                          builder: (ctx) => const AddItemModal(),
+                        );
+                        if (result == true) {
+                          setState(() {
+                            _selectedIndex = 1;
+                          });
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(28),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 8)],
+                        ),
+                        child: const Icon(Icons.add, color: Colors.white, size: 28),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Riwayat
+                _buildNavItem(
+                  index: 2,
+                  icon: Icons.history_outlined,
+                  activeIcon: Icons.history,
+                  label: 'Riwayat',
+                ),
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: _navIcon(Icons.inventory_2_outlined, badgeCount: lowStockCount),
-            selectedIcon: _navIcon(Icons.inventory_2, badgeCount: lowStockCount),
-            label: 'Stok Barang',
+        ),
+      ),
+    );
+  }
+
+    Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    int? badgeCount,
+  }) {
+    final selected = _selectedIndex == index;
+    final color = selected ? AppTheme.primaryColor : Colors.grey.shade600;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _selectedIndex = index),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icon with optional badge
+              badgeCount == null || badgeCount == 0
+                  ? Icon(selected ? activeIcon : icon, color: color)
+                  : Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(selected ? activeIcon : icon, color: color),
+                        Positioned(
+                          right: -6,
+                          top: -6,
+                          child: Container(
+                            padding: badgeCount > 1 ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.warningColor,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4)],
+                            ),
+                            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                            child: Center(
+                              child: Text(
+                                badgeCount > 1 ? '$badgeCount' : '',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+              const SizedBox(height: 4),
+              Text(label, style: TextStyle(fontSize: 11, color: color)),
+            ],
           ),
-          NavigationDestination(
-            icon: _navIcon(Icons.history_outlined),
-            selectedIcon: _navIcon(Icons.history),
-            label: 'Riwayat',
-          ),
-        ],
+        ),
       ),
     );
   }
