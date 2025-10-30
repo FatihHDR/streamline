@@ -9,7 +9,7 @@ class HttpService {
   Future<ExperimentResult> fetchPost(int id) async {
     final sw = Stopwatch()..start();
     try {
-      final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+      final base = _getBaseUrl();
       final res = await client.get(Uri.parse('$base/posts/$id'));
       sw.stop();
       return ExperimentResult(
@@ -40,7 +40,7 @@ class HttpService {
 
     final sw = Stopwatch()..start();
     try {
-      final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+      final base = _getBaseUrl();
       final res = await client.get(Uri.parse('$base/posts/$postId/comments'));
       sw.stop();
       results.add(ExperimentResult(
@@ -56,5 +56,16 @@ class HttpService {
     }
 
     return results;
+  }
+
+  String _getBaseUrl() {
+    const fallback = 'https://jsonplaceholder.typicode.com';
+    try {
+      final v = dotenv.env['API_BASE_URL'];
+      if (v == null || v.isEmpty) return fallback;
+      return v;
+    } catch (_) {
+      return fallback;
+    }
   }
 }

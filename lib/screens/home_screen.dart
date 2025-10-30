@@ -153,10 +153,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? await expC.httpService.fetchPost(1)
                               : await expC.dioService.fetchPost(1);
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_networkMode.name} result: ${res.success ? 'OK' : 'ERR'} ${res.statusCode} in ${res.durationMs} ms')));
+                          final statusMsg = res.success ? 'OK' : 'ERR';
+                          final errPart = res.error != null && res.error!.isNotEmpty ? ' — ${res.error}' : '';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${_networkMode.name} result: $statusMsg ${res.statusCode} in ${res.durationMs} ms$errPart'),
+                            ),
+                          );
+
                           if (_networkMode == NetworkMode.dio) {
                             if (!mounted) return;
-                            // show recent dio logs
+                            // show recent dio logs + error (if any)
                             showModalBottomSheet(
                               context: context,
                               builder: (_) => Padding(
@@ -167,8 +174,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     const Text('Dio logs (recent)', style: TextStyle(fontWeight: FontWeight.bold)),
                                     const SizedBox(height: 8),
+                                    if (res.error != null && res.error!.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(bottom: 8.0),
+                                        child: Text('Error: ${res.error}', style: const TextStyle(color: Colors.redAccent)),
+                                      ),
                                     if (expC.dioLogs.isEmpty) const Text('No logs'),
-                                    ...expC.dioLogs.reversed.take(20).map((e) => Text(e)),
+                                    ...expC.dioLogs.reversed.take(20).map((e) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 6.0),
+                                          child: Text(e),
+                                        )),
                                   ],
                                 ),
                               ),
