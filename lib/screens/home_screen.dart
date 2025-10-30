@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
-import 'package:get/get.dart';
 import '../experiments/controllers/experiment_controller.dart';
 import '../widgets/network_mode_selector.dart';
 import 'dashboard_animated_container.dart';
@@ -146,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // test button (play)
                     InkWell(
                       onTap: () async {
-                        final expC = Get.put(ExperimentController());
+                        final expC = ExperimentController();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Testing ${_networkMode.name}...')));
                         try {
                           final res = _networkMode == NetworkMode.http

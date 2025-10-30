@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 import '../models/experiment_result.dart';
 
 typedef LogCallback = void Function(String message);
@@ -15,11 +16,16 @@ class DioService {
 
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        onLog?.call('➡ REQUEST: ${options.method} ${options.uri}');
+    final reqMsg = '➡ REQUEST: ${options.method} ${options.uri}';
+    // print to terminal and optional callback
+    debugPrint('DIO: $reqMsg');
+    onLog?.call(reqMsg);
         handler.next(options);
       },
       onResponse: (response, handler) {
-        onLog?.call('⬅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}');
+  final resMsg = '⬅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}';
+  debugPrint('DIO: $resMsg');
+  onLog?.call(resMsg);
         handler.next(response);
       },
       onError: (err, handler) {
@@ -28,9 +34,13 @@ class DioService {
           final status = err.response?.statusCode;
           final body = err.response?.data?.toString();
           if (status != null) {
-            onLog?.call('‼ ERROR RESPONSE: $status ${err.requestOptions.uri} - ${body ?? ''}');
+            final msg = '‼ ERROR RESPONSE: $status ${err.requestOptions.uri} - ${body ?? ''}';
+            debugPrint('DIO: $msg');
+            onLog?.call(msg);
           } else {
-            onLog?.call('‼ ERROR: ${err.message} ${err.requestOptions.uri}');
+            final msg = '‼ ERROR: ${err.message} ${err.requestOptions.uri}';
+            debugPrint('DIO: $msg');
+            onLog?.call(msg);
           }
         } catch (_) {
           onLog?.call('‼ ERROR (unknown) ${err.requestOptions.uri}');
@@ -43,8 +53,9 @@ class DioService {
   Future<ExperimentResult> fetchPost(int id) async {
     final sw = Stopwatch()..start();
     try {
-      final base = _getBaseUrl();
-      final res = await dio.get('$base/posts/$id');
+  final base = _getBaseUrl();
+  final uri = _buildResourceUri(base, 'posts', id);
+  final res = await dio.getUri(uri);
       sw.stop();
       return ExperimentResult(
         success: res.statusCode == 200 || res.statusCode == 201,
@@ -59,12 +70,16 @@ class DioService {
         if (e is DioError) {
           final sc = e.response?.statusCode ?? 0;
           final body = e.response?.data?.toString() ?? '';
-          onLog?.call('‼ EXCEPTION: ${e.type} - status:$sc - ${body.isNotEmpty ? body : e.message}');
+          final msg = '‼ EXCEPTION: ${e.type} - status:$sc - ${body.isNotEmpty ? body : e.message}';
+          debugPrint('DIO: $msg');
+          onLog?.call(msg);
           return ExperimentResult(success: false, statusCode: sc, body: body, durationMs: sw.elapsedMilliseconds, error: e.message);
         }
       } catch (_) {}
 
-      onLog?.call('‼ EXCEPTION: ${e.toString()}');
+      final exMsg = '‼ EXCEPTION: ${e.toString()}';
+      debugPrint('DIO: $exMsg');
+      onLog?.call(exMsg);
       return ExperimentResult(success: false, statusCode: 0, body: '', durationMs: sw.elapsedMilliseconds, error: e.toString());
     }
   }
@@ -78,7 +93,23 @@ class DioService {
     final sw = Stopwatch()..start();
     try {
   final base = _getBaseUrl();
-  final res = await dio.get('$base/posts/$postId/comments');
+  // Build comments URI: if base already contains resource segment (products/posts)
+  // append '/{id}/comments', otherwise use '/posts/{id}/comments'.
+  Uri commentsUri;
+  try {
+    final baseUri = Uri.parse(base);
+    final path = baseUri.path;
+    final prefix = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    if (path.contains('products') || path.contains('posts')) {
+      commentsUri = Uri.parse('$prefix/$postId/comments');
+    } else {
+      commentsUri = Uri.parse('$prefix/posts/$postId/comments');
+    }
+  } catch (_) {
+    final prefix = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    commentsUri = Uri.parse('$prefix/posts/$postId/comments');
+  }
+  final res = await dio.getUri(commentsUri);
       sw.stop();
       results.add(ExperimentResult(success: res.statusCode == 200 || res.statusCode == 201, statusCode: res.statusCode ?? 0, body: res.data?.toString() ?? '', durationMs: sw.elapsedMilliseconds, error: (res.statusCode != 200 && res.statusCode != 201) ? 'HTTP ${res.statusCode}' : null));
     } catch (e) {
@@ -87,13 +118,17 @@ class DioService {
         if (e is DioError) {
           final sc = e.response?.statusCode ?? 0;
           final body = e.response?.data?.toString() ?? '';
-          onLog?.call('‼ EXCEPTION: ${e.type} - status:$sc - ${body.isNotEmpty ? body : e.message}');
+          final msg = '‼ EXCEPTION: ${e.type} - status:$sc - ${body.isNotEmpty ? body : e.message}';
+          debugPrint('DIO: $msg');
+          onLog?.call(msg);
           results.add(ExperimentResult(success: false, statusCode: sc, body: body, durationMs: sw.elapsedMilliseconds, error: e.message));
           return results;
         }
       } catch (_) {}
 
-      onLog?.call('‼ EXCEPTION: ${e.toString()}');
+      final exMsg = '‼ EXCEPTION: ${e.toString()}';
+      debugPrint('DIO: $exMsg');
+      onLog?.call(exMsg);
       results.add(ExperimentResult(success: false, statusCode: 0, body: '', durationMs: sw.elapsedMilliseconds, error: e.toString()));
     }
 
@@ -101,14 +136,37 @@ class DioService {
   }
 
   String _getBaseUrl() {
-    const fallback = 'https://jsonplaceholder.typicode.com';
+    const fallback = 'https://dummyjson.com/products';
     try {
-      final v = dotenv.env['API_BASE_URL'];
+      // Support multiple env keys: prefer explicit API_BASE_URL, otherwise public_API
+      final v = dotenv.env['API_BASE_URL'] ?? dotenv.env['public_API'] ?? dotenv.env['BASE_URL'];
       if (v == null || v.isEmpty) return fallback;
       return v;
     } catch (_) {
       // If dotenv wasn't initialized, return fallback instead of throwing
       return fallback;
+    }
+  }
+
+  /// Build a Uri for a resource id. If the base already contains a resource
+  /// segment (e.g. ends with '/products' or '/posts'), use that and append
+  /// '/{id}'. Otherwise use the defaultResource (e.g. 'posts').
+  Uri _buildResourceUri(String base, String defaultResource, int id) {
+    try {
+      final baseUri = Uri.parse(base);
+      final path = baseUri.path; // may be '/products' or '/'
+      if (path.contains('products') || path.contains('posts')) {
+        // ensure we don't duplicate slashes
+        final prefix = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+        return Uri.parse('$prefix/$id');
+      } else {
+        final prefix = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+        return Uri.parse('$prefix/$defaultResource/$id');
+      }
+    } catch (_) {
+      // fallback: try simple concatenation
+      if (base.endsWith('/')) return Uri.parse('$base$id');
+      return Uri.parse('$base/$defaultResource/$id');
     }
   }
 }

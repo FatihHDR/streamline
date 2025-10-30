@@ -12,6 +12,15 @@ class ExperimentController extends GetxController {
     dioService = DioService(onLog: (msg) {
       dioLogs.add(msg);
       update();
+      // also print to terminal so developer can see realtime Dio logs
+      try {
+        // use debugPrint to avoid large-console truncation issues
+        // avoid importing flutter here; print is acceptable in controller
+        // but we'll use print to ensure availability in non-flutter contexts
+        // and make logs visible in the terminal
+        // ignore: avoid_print
+        print('DIO_LOG: $msg');
+      } catch (_) {}
     });
   }
 
