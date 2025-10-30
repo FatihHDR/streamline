@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
 import '../models/stock_item.dart';
+import '../providers/inventory_provider.dart';
 import '../widgets/stat_card_animated.dart';
 import '../widgets/stock_chart_animated.dart';
 import '../widgets/low_stock_alert_animated.dart';
@@ -10,36 +11,50 @@ class DashboardAnimatedContainer extends StatefulWidget {
   const DashboardAnimatedContainer({super.key});
 
   @override
-  State<DashboardAnimatedContainer> createState() => _DashboardAnimatedContainerState();
+  State<DashboardAnimatedContainer> createState() =>
+      _DashboardAnimatedContainerState();
 }
 
-class _DashboardAnimatedContainerState extends State<DashboardAnimatedContainer> {
+class _DashboardAnimatedContainerState
+    extends State<DashboardAnimatedContainer> {
   bool _isExpanded = false;
 
-  int get totalItems => DummyData.stockItems.length;
-  int get totalQuantity => DummyData.stockItems.fold(0, (sum, item) => sum + item.quantity);
-  int get lowStockItems => DummyData.stockItems.where((item) => item.isLowStock).length;
-  int get outOfStockItems => DummyData.stockItems.where((item) => item.isOutOfStock).length;
-  
-  List<StockItem> get lowStockList => DummyData.stockItems
-      .where((item) => item.isLowStock)
-      .toList();
+  int get totalItems => context.read<InventoryProvider>().items.length;
+  int get totalQuantity => context.read<InventoryProvider>().items.fold(
+    0,
+    (sum, item) => sum + item.quantity,
+  );
+  int get lowStockItems =>
+      context.read<InventoryProvider>().getLowStockItems().length;
+  int get outOfStockItems => context
+      .read<InventoryProvider>()
+      .items
+      .where((item) => item.isOutOfStock)
+      .length;
+
+  List<StockItem> get lowStockList =>
+      context.read<InventoryProvider>().getLowStockItems();
 
   @override
   Widget build(BuildContext context) {
-  final bottomInset = MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight;
+    final bottomInset =
+        MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight;
 
     return RefreshIndicator(
       onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
+        final provider = context.read<InventoryProvider>();
+        await Future.wait([
+          provider.loadStockItems(),
+          provider.loadTransactions(),
+        ]);
         setState(() {
           _isExpanded = !_isExpanded;
         });
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-  // Add extra buffer to ensure content doesn't overflow under the bottom nav
-  padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
+        // Add extra buffer to ensure content doesn't overflow under the bottom nav
+        padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -73,7 +88,9 @@ class _DashboardAnimatedContainerState extends State<DashboardAnimatedContainer>
                         padding: EdgeInsets.all(_isExpanded ? 12 : 8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(_isExpanded ? 12 : 8),
+                          borderRadius: BorderRadius.circular(
+                            _isExpanded ? 12 : 8,
+                          ),
                         ),
                         child: ClipOval(
                           child: Image.asset(

@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
 import '../models/stock_transaction.dart';
+import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   final AnimationMode animationMode;
 
-  const TransactionHistoryScreen({
-    super.key,
-    required this.animationMode,
-  });
+  const TransactionHistoryScreen({super.key, required this.animationMode});
 
   @override
-  State<TransactionHistoryScreen> createState() => _TransactionHistoryScreenState();
+  State<TransactionHistoryScreen> createState() =>
+      _TransactionHistoryScreenState();
 }
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
@@ -22,10 +21,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
   late AnimationController _refreshController;
 
   List<StockTransaction> get filteredTransactions {
+    final transactions = context.read<InventoryProvider>().transactions;
     if (_filterType == 'Semua') {
-      return DummyData.transactions;
+      return transactions;
     }
-    return DummyData.transactions.where((t) {
+    return transactions.where((t) {
       if (_filterType == 'Masuk') {
         return t.type == TransactionType.incoming;
       } else {
@@ -41,6 +41,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
+
+    // Load data when screen initializes
+    Future.microtask(() {
+      final provider = Provider.of<InventoryProvider>(context, listen: false);
+      provider.loadTransactions();
+    });
   }
 
   @override
@@ -87,7 +93,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
             ],
           ),
         ),
-        
+
         // Transaction List
         Expanded(
           child: filteredTransactions.isEmpty
@@ -97,11 +103,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                   itemCount: filteredTransactions.length,
                   itemBuilder: (context, index) {
                     final transaction = filteredTransactions[index];
-                    
-                    if (widget.animationMode == AnimationMode.animatedContainer) {
+
+                    if (widget.animationMode ==
+                        AnimationMode.animatedContainer) {
                       return _buildAnimatedTransactionCard(transaction, index);
                     } else {
-                      return _buildControllerTransactionCard(transaction, index);
+                      return _buildControllerTransactionCard(
+                        transaction,
+                        index,
+                      );
                     }
                   },
                 ),
@@ -112,7 +122,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
 
   Widget _buildFilterTab(String label) {
     final isSelected = _filterType == label;
-    
+
     if (widget.animationMode == AnimationMode.animatedContainer) {
       return GestureDetector(
         onTap: () {
@@ -205,9 +215,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     }
   }
 
-  Widget _buildAnimatedTransactionCard(StockTransaction transaction, int index) {
+  Widget _buildAnimatedTransactionCard(
+    StockTransaction transaction,
+    int index,
+  ) {
     final isIncoming = transaction.type == TransactionType.incoming;
-    
+
     return AnimatedContainer(
       duration: Duration(milliseconds: 300 + (index * 50)),
       curve: Curves.easeOut,
@@ -231,7 +244,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                   ),
                   child: Icon(
                     isIncoming ? Icons.arrow_downward : Icons.arrow_upward,
-                    color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                    color: isIncoming
+                        ? AppTheme.successColor
+                        : AppTheme.infoColor,
                     size: 24,
                   ),
                 ),
@@ -253,7 +268,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                         transaction.typeLabel,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                          color: isIncoming
+                              ? AppTheme.successColor
+                              : AppTheme.infoColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -281,7 +298,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                        color: isIncoming
+                            ? AppTheme.successColor
+                            : AppTheme.infoColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -302,9 +321,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     );
   }
 
-  Widget _buildControllerTransactionCard(StockTransaction transaction, int index) {
+  Widget _buildControllerTransactionCard(
+    StockTransaction transaction,
+    int index,
+  ) {
     final isIncoming = transaction.type == TransactionType.incoming;
-    
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
       duration: Duration(milliseconds: 300 + (index * 100)),
@@ -333,8 +355,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            isIncoming ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                            isIncoming
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: isIncoming
+                                ? AppTheme.successColor
+                                : AppTheme.infoColor,
                             size: 24,
                           ),
                         ),
@@ -356,7 +382,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                                 transaction.typeLabel,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                                  color: isIncoming
+                                      ? AppTheme.successColor
+                                      : AppTheme.infoColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -384,7 +412,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                                color: isIncoming
+                                    ? AppTheme.successColor
+                                    : AppTheme.infoColor,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -414,11 +444,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history_outlined,
-            size: 80,
-            color: Colors.grey.shade300,
-          ),
+          Icon(Icons.history_outlined, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
             'Belum ada transaksi',
@@ -431,10 +457,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
           const SizedBox(height: 8),
           Text(
             'Transaksi akan muncul di sini',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -443,7 +466,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
 
   void _showTransactionDetail(StockTransaction transaction) {
     final isIncoming = transaction.type == TransactionType.incoming;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -482,8 +505,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Icon(
-                            isIncoming ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                            isIncoming
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: isIncoming
+                                ? AppTheme.successColor
+                                : AppTheme.infoColor,
                             size: 48,
                           ),
                         ),
@@ -496,7 +523,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                                 transaction.typeLabel,
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: isIncoming ? AppTheme.successColor : AppTheme.infoColor,
+                                  color: isIncoming
+                                      ? AppTheme.successColor
+                                      : AppTheme.infoColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -521,9 +550,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
                       'Kuantitas',
                       '${isIncoming ? '+' : '-'}${transaction.quantity}',
                     ),
-                    _buildDetailRow('Tanggal', _formatDateLong(transaction.date)),
+                    _buildDetailRow(
+                      'Tanggal',
+                      _formatDateLong(transaction.date),
+                    ),
                     if (transaction.performedBy != null)
-                      _buildDetailRow('Dilakukan oleh', transaction.performedBy!),
+                      _buildDetailRow(
+                        'Dilakukan oleh',
+                        transaction.performedBy!,
+                      ),
                     if (transaction.note != null) ...[
                       const SizedBox(height: 16),
                       const Text(
@@ -568,10 +603,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           Text(
             value,
@@ -604,8 +636,18 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
 
   String _formatDateLong(DateTime date) {
     final months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}, ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }

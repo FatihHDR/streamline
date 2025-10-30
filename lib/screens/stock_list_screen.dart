@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
 import '../models/stock_item.dart';
+import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
 
 class StockListScreen extends StatefulWidget {
   final AnimationMode animationMode;
 
-  const StockListScreen({
-    super.key,
-    required this.animationMode,
-  });
+  const StockListScreen({super.key, required this.animationMode});
 
   @override
   State<StockListScreen> createState() => _StockListScreenState();
@@ -23,15 +21,22 @@ class _StockListScreenState extends State<StockListScreen>
   late AnimationController _listController;
 
   List<String> get categories {
-    final cats = DummyData.stockItems.map((e) => e.category).toSet().toList();
+    final items = context.read<InventoryProvider>().items;
+    final cats = items.map((e) => e.category).toSet().toList();
     return ['Semua', ...cats];
   }
 
   List<StockItem> get filteredItems {
-    return DummyData.stockItems.where((item) {
-      final matchesSearch = item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.description?.toLowerCase().contains(_searchQuery.toLowerCase()) == true;
-      final matchesCategory = _selectedCategory == 'Semua' || item.category == _selectedCategory;
+    final items = context.read<InventoryProvider>().items;
+    return items.where((item) {
+      final matchesSearch =
+          item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ==
+              true;
+      final matchesCategory =
+          _selectedCategory == 'Semua' || item.category == _selectedCategory;
       return matchesSearch && matchesCategory;
     }).toList();
   }
@@ -43,6 +48,12 @@ class _StockListScreenState extends State<StockListScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
+
+    // Load data when screen initializes
+    Future.microtask(() {
+      final provider = Provider.of<InventoryProvider>(context, listen: false);
+      provider.loadStockItems();
+    });
   }
 
   @override
@@ -58,6 +69,26 @@ class _StockListScreenState extends State<StockListScreen>
 
   @override
   Widget build(BuildContext context) {
+    final inventoryProvider = context.watch<InventoryProvider>();
+
+    if (inventoryProvider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(inventoryProvider.error!),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => inventoryProvider.loadStockItems(),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         // Search and Filter Section
@@ -80,8 +111,9 @@ class _StockListScreenState extends State<StockListScreen>
                   itemBuilder: (context, index) {
                     final category = categories[index];
                     final isSelected = category == _selectedCategory;
-                    
-                    if (widget.animationMode == AnimationMode.animatedContainer) {
+
+                    if (widget.animationMode ==
+                        AnimationMode.animatedContainer) {
                       return _buildAnimatedCategoryChip(category, isSelected);
                     } else {
                       return _buildControllerCategoryChip(category, isSelected);
@@ -92,24 +124,32 @@ class _StockListScreenState extends State<StockListScreen>
             ],
           ),
         ),
-        
+
         // Stock List
         Expanded(
-          child: filteredItems.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredItems.length,
-                  itemBuilder: (context, index) {
-                    final item = filteredItems[index];
-                    
-                    if (widget.animationMode == AnimationMode.animatedContainer) {
-                      return _buildAnimatedStockCard(item, index);
-                    } else {
-                      return _buildControllerStockCard(item, index);
-                    }
-                  },
-                ),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await context.read<InventoryProvider>().loadStockItems();
+            },
+            child: inventoryProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredItems.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+
+                      if (widget.animationMode ==
+                          AnimationMode.animatedContainer) {
+                        return _buildAnimatedStockCard(item, index);
+                      } else {
+                        return _buildControllerStockCard(item, index);
+                      }
+                    },
+                  ),
+          ),
         ),
       ],
     );
@@ -117,7 +157,7 @@ class _StockListScreenState extends State<StockListScreen>
 
   Widget _buildAnimatedSearchBar() {
     bool isFocused = _searchQuery.isNotEmpty;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -200,7 +240,9 @@ class _StockListScreenState extends State<StockListScreen>
                   hintText: 'Cari barang...',
                   prefixIcon: Icon(
                     Icons.search,
-                    color: _searchQuery.isNotEmpty ? AppTheme.primaryColor : Colors.grey,
+                    color: _searchQuery.isNotEmpty
+                        ? AppTheme.primaryColor
+                        : Colors.grey,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -284,7 +326,10 @@ class _StockListScreenState extends State<StockListScreen>
             child: Transform.scale(
               scale: 0.95 + (0.05 * value),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Color.lerp(
                     Colors.grey.shade200,
@@ -301,7 +346,9 @@ class _StockListScreenState extends State<StockListScreen>
                       Colors.white,
                       value,
                     ),
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),
@@ -363,7 +410,10 @@ class _StockListScreenState extends State<StockListScreen>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: _getStatusColor(item).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(4),
@@ -465,7 +515,10 @@ class _StockListScreenState extends State<StockListScreen>
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(item).withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
@@ -519,11 +572,7 @@ class _StockListScreenState extends State<StockListScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 80,
-            color: Colors.grey.shade300,
-          ),
+          Icon(Icons.inbox_outlined, size: 80, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
             'Tidak ada barang ditemukan',
@@ -536,10 +585,7 @@ class _StockListScreenState extends State<StockListScreen>
           const SizedBox(height: 8),
           Text(
             'Coba ubah filter atau kata kunci pencarian',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -615,7 +661,10 @@ class _StockListScreenState extends State<StockListScreen>
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(item).withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
@@ -637,8 +686,14 @@ class _StockListScreenState extends State<StockListScreen>
                     const SizedBox(height: 24),
                     _buildDetailRow('Kategori', item.category),
                     _buildDetailRow('Lokasi', item.location),
-                    _buildDetailRow('Kuantitas', '${item.quantity} ${item.unit}'),
-                    _buildDetailRow('Stok Minimum', '${item.minStock} ${item.unit}'),
+                    _buildDetailRow(
+                      'Kuantitas',
+                      '${item.quantity} ${item.unit}',
+                    ),
+                    _buildDetailRow(
+                      'Stok Minimum',
+                      '${item.minStock} ${item.unit}',
+                    ),
                     _buildDetailRow(
                       'Terakhir Update',
                       _formatDate(item.lastUpdated),
@@ -680,10 +735,7 @@ class _StockListScreenState extends State<StockListScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           Text(
             value,

@@ -99,7 +99,10 @@ class _AddItemModalState extends State<AddItemModal> {
                 ),
               ),
             ),
-            const Text('Tambah Barang', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text(
+              'Tambah Barang',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 8),
             Form(
               key: _formKey,
@@ -108,7 +111,9 @@ class _AddItemModalState extends State<AddItemModal> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Nama Barang'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Masukkan nama barang' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Masukkan nama barang'
+                        : null,
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -121,7 +126,9 @@ class _AddItemModalState extends State<AddItemModal> {
                       Expanded(
                         child: TextFormField(
                           controller: _quantityController,
-                          decoration: const InputDecoration(labelText: 'Jumlah'),
+                          decoration: const InputDecoration(
+                            labelText: 'Jumlah',
+                          ),
                           keyboardType: TextInputType.number,
                         ),
                       ),
@@ -129,7 +136,9 @@ class _AddItemModalState extends State<AddItemModal> {
                       Expanded(
                         child: TextFormField(
                           controller: _unitController,
-                          decoration: const InputDecoration(labelText: 'Satuan'),
+                          decoration: const InputDecoration(
+                            labelText: 'Satuan',
+                          ),
                         ),
                       ),
                     ],
@@ -140,7 +149,9 @@ class _AddItemModalState extends State<AddItemModal> {
                       Expanded(
                         child: TextFormField(
                           controller: _minStockController,
-                          decoration: const InputDecoration(labelText: 'Min. Stok'),
+                          decoration: const InputDecoration(
+                            labelText: 'Min. Stok',
+                          ),
                           keyboardType: TextInputType.number,
                         ),
                       ),
@@ -148,7 +159,9 @@ class _AddItemModalState extends State<AddItemModal> {
                       Expanded(
                         child: TextFormField(
                           controller: _locationController,
-                          decoration: const InputDecoration(labelText: 'Lokasi'),
+                          decoration: const InputDecoration(
+                            labelText: 'Lokasi',
+                          ),
                         ),
                       ),
                     ],
@@ -156,16 +169,29 @@ class _AddItemModalState extends State<AddItemModal> {
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _descriptionController,
-                    decoration: const InputDecoration(labelText: 'Keterangan (opsional)'),
+                    decoration: const InputDecoration(
+                      labelText: 'Keterangan (opsional)',
+                    ),
                     maxLines: 2,
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                      ),
                       onPressed: _submitting ? null : _submit,
-                      child: _submitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Simpan'),
+                      child: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Simpan'),
                     ),
                   ),
                   const SizedBox(height: 8),

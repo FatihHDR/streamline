@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
+import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
@@ -41,8 +42,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Load data when the screen is initialized
+    Future.microtask(() {
+      final provider = Provider.of<InventoryProvider>(context, listen: false);
+      provider.loadStockItems();
+      provider.loadTransactions();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final lowStockCount = DummyData.stockItems.where((i) => i.isLowStock).length;
+    final inventoryProvider = Provider.of<InventoryProvider>(context);
+    final lowStockCount = inventoryProvider.getLowStockItems().length;
 
     // navigation icon helper removed — custom BottomAppBar is used instead
     return Scaffold(
@@ -83,9 +96,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: const [
-                    Text('Streamline', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                    Text(
+                      'Streamline',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     SizedBox(height: 2),
-                    Text('Dashboard', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                    Text(
+                      'Dashboard',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
                   ],
                 ),
                 const SizedBox(width: 18),
@@ -155,7 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           context: context,
                           isScrollControlled: true,
                           shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
                           ),
                           builder: (ctx) => const AddItemModal(),
                         );
@@ -172,9 +196,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.primaryColor,
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 8)],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.14),
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 28),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ),
@@ -195,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-    Widget _buildNavItem({
+  Widget _buildNavItem({
     required int index,
     required IconData icon,
     required IconData activeIcon,
@@ -226,17 +259,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           right: -6,
                           top: -6,
                           child: Container(
-                            padding: badgeCount > 1 ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : const EdgeInsets.all(6),
+                            padding: badgeCount > 1
+                                ? const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  )
+                                : const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: AppTheme.warningColor,
                               borderRadius: BorderRadius.circular(12),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.12),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
-                            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                            constraints: const BoxConstraints(
+                              minWidth: 14,
+                              minHeight: 14,
+                            ),
                             child: Center(
                               child: Text(
                                 badgeCount > 1 ? '$badgeCount' : '',
-                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
