@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/experiment_result.dart';
 
 typedef LogCallback = void Function(String message);
@@ -28,7 +29,8 @@ class DioService {
   Future<ExperimentResult> fetchPost(int id) async {
     final sw = Stopwatch()..start();
     try {
-      final res = await dio.get('https://jsonplaceholder.typicode.com/posts/$id');
+      final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+      final res = await dio.get('$base/posts/$id');
       sw.stop();
       return ExperimentResult(
         success: res.statusCode == 200 || res.statusCode == 201,
@@ -50,7 +52,8 @@ class DioService {
 
     final sw = Stopwatch()..start();
     try {
-      final res = await dio.get('https://jsonplaceholder.typicode.com/posts/$postId/comments');
+  final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+  final res = await dio.get('$base/posts/$postId/comments');
       sw.stop();
       results.add(ExperimentResult(success: res.statusCode == 200 || res.statusCode == 201, statusCode: res.statusCode ?? 0, body: res.data.toString(), durationMs: sw.elapsedMilliseconds));
     } catch (e) {

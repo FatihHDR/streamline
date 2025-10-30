@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import '../models/experiment_result.dart';
 import '../services/http_service.dart';
@@ -64,19 +65,27 @@ class ExperimentController extends GetxController {
 
   // Chained scenario implemented with callbacks (then)
   Future<List<ExperimentResult>> chainedCallbacks(int postId) async {
+    final completer = Completer<List<ExperimentResult>>();
     final results = <ExperimentResult>[];
-    return httpService.fetchPost(postId).then((postRes) {
+
+    httpService.fetchPost(postId).then((postRes) {
       results.add(postRes);
-      if (!postRes.success) return results;
-      return httpService.fetchPostAndComments(postId).then((commentResList) {
-        // fetchPostAndComments already includes post + comments, but we append for demonstration
+      if (!postRes.success) {
+        completer.complete(results);
+        return;
+      }
+      httpService.fetchPostAndComments(postId).then((commentResList) {
         results.addAll(commentResList);
-        return results;
+        completer.complete(results);
+      }).catchError((e) {
+        results.add(ExperimentResult(success: false, statusCode: 0, body: '', durationMs: 0, error: e.toString()));
+        completer.complete(results);
       });
     }).catchError((e) {
-      // wrap error as ExperimentResult
       results.add(ExperimentResult(success: false, statusCode: 0, body: '', durationMs: 0, error: e.toString()));
-      return results;
+      completer.complete(results);
     });
+
+    return completer.future;
   }
 }

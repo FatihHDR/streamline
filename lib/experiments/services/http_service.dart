@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/experiment_result.dart';
 
 class HttpService {
@@ -8,7 +9,8 @@ class HttpService {
   Future<ExperimentResult> fetchPost(int id) async {
     final sw = Stopwatch()..start();
     try {
-      final res = await client.get(Uri.parse('https://jsonplaceholder.typicode.com/posts/$id'));
+      final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+      final res = await client.get(Uri.parse('$base/posts/$id'));
       sw.stop();
       return ExperimentResult(
         success: res.statusCode == 200,
@@ -38,7 +40,8 @@ class HttpService {
 
     final sw = Stopwatch()..start();
     try {
-      final res = await client.get(Uri.parse('https://jsonplaceholder.typicode.com/posts/$postId/comments'));
+      final base = dotenv.env['API_BASE_URL'] ?? 'https://jsonplaceholder.typicode.com';
+      final res = await client.get(Uri.parse('$base/posts/$postId/comments'));
       sw.stop();
       results.add(ExperimentResult(
         success: res.statusCode == 200,

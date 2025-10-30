@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../utils/app_theme.dart';
 import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
+import 'package:get/get.dart';
+import '../experiments/controllers/experiment_controller.dart';
+import '../widgets/network_mode_selector.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
 import 'stock_list_screen.dart';
@@ -19,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   AnimationMode _animationMode = AnimationMode.animationController;
+  NetworkMode _networkMode = NetworkMode.dio;
 
   void _onAnimationModeChanged(AnimationMode mode) {
     setState(() {
@@ -131,6 +135,62 @@ class _HomeScreenState extends State<HomeScreen> {
                   onModeChanged: _onAnimationModeChanged,
                 ),
                 const SizedBox(width: 8),
+                // Network mode selector placed alongside animation mode
+                Row(
+                  children: [
+                    NetworkModeSelector(
+                      currentMode: _networkMode,
+                      onModeChanged: (m) => setState(() => _networkMode = m),
+                    ),
+                    const SizedBox(width: 8),
+                    // test button (play)
+                    InkWell(
+                      onTap: () async {
+                        final expC = Get.put(ExperimentController());
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Testing ${_networkMode.name}...')));
+                        try {
+                          final res = _networkMode == NetworkMode.http
+                              ? await expC.httpService.fetchPost(1)
+                              : await expC.dioService.fetchPost(1);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_networkMode.name} result: ${res.success ? 'OK' : 'ERR'} ${res.statusCode} in ${res.durationMs} ms')));
+                          if (_networkMode == NetworkMode.dio) {
+                            if (!mounted) return;
+                            // show recent dio logs
+                            showModalBottomSheet(
+                              context: context,
+                              builder: (_) => Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Dio logs (recent)', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    const SizedBox(height: 8),
+                                    if (expC.dioLogs.isEmpty) const Text('No logs'),
+                                    ...expC.dioLogs.reversed.take(20).map((e) => Text(e)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
