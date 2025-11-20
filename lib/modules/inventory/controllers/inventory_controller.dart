@@ -1,13 +1,14 @@
 import 'package:get/get.dart';
 import '../../../models/stock_item.dart';
 import '../../../models/stock_transaction.dart';
+import '../../../providers/i_data_provider.dart';
 import '../../../providers/inventory_data_provider.dart';
 
 class InventoryController extends GetxController {
-  InventoryController({InventoryDataProvider? dataProvider})
+  InventoryController({IDataProvider? dataProvider})
       : _dataProvider = dataProvider ?? InventoryDataProvider();
 
-  final InventoryDataProvider _dataProvider;
+  final IDataProvider _dataProvider;
 
   final RxList<StockItem> items = <StockItem>[].obs;
   final RxList<StockTransaction> transactions = <StockTransaction>[].obs;

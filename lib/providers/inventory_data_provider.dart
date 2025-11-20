@@ -3,10 +3,11 @@ import '../models/stock_item.dart';
 import '../models/stock_transaction.dart';
 import '../services/supabase_service.dart';
 import '../services/hive_service.dart';
+import 'i_data_provider.dart';
 
 /// Provides data access for inventory-related resources with caching strategy.
 /// Priority: Supabase (remote) → Hive (local cache) → Error
-class InventoryDataProvider {
+class InventoryDataProvider implements IDataProvider {
   InventoryDataProvider({
     SupabaseService? supabaseService,
     HiveService? hiveService,

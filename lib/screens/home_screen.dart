@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../widgets/animation_mode_selector.dart';
+import '../widgets/sync_status_indicator.dart';
 import '../services/preferences_service.dart';
 import '../experiments/controllers/experiment_controller.dart';
 import '../widgets/network_mode_selector.dart';
@@ -141,6 +142,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
+                const SyncStatusIndicator(),
+                const SizedBox(width: 8),
                 AnimationModeSelector(
                   currentMode: _animationMode,
                   onModeChanged: _onAnimationModeChanged,

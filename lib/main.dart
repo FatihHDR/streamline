@@ -5,11 +5,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/stock_item.dart';
 import 'models/stock_transaction.dart';
+import 'models/pending_operation.dart';
 import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
 import 'services/auth_service.dart';
 import 'services/preferences_service.dart';
+import 'services/sync_queue_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,8 @@ void main() async {
   Hive.registerAdapter(StockItemAdapter());
   Hive.registerAdapter(StockTransactionAdapter());
   Hive.registerAdapter(TransactionTypeAdapter());
+  Hive.registerAdapter(PendingOperationAdapter());
+  Hive.registerAdapter(OperationTypeAdapter());
   
   // Initialize Supabase
   await Supabase.initialize(
@@ -42,6 +46,10 @@ void main() async {
   // Initialize preferences service
   final prefsService = Get.put(PreferencesService());
   await prefsService.onInit();
+  
+  // Initialize sync queue service
+  final syncQueueService = Get.put(SyncQueueService());
+  await syncQueueService.init();
   
   runApp(const StreamlineApp());
 }
