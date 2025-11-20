@@ -1,12 +1,34 @@
+import 'package:hive/hive.dart';
+
+part 'stock_item.g.dart';
+
+@HiveType(typeId: 0)
 class StockItem {
+  @HiveField(0)
   final String id;
+  
+  @HiveField(1)
   final String name;
+  
+  @HiveField(2)
   final String category;
+  
+  @HiveField(3)
   final int quantity;
+  
+  @HiveField(4)
   final String unit;
+  
+  @HiveField(5)
   final DateTime lastUpdated;
+  
+  @HiveField(6)
   final String location;
+  
+  @HiveField(7)
   final int minStock;
+  
+  @HiveField(8)
   final String? description;
 
   StockItem({

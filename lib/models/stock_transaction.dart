@@ -1,13 +1,40 @@
-enum TransactionType { incoming, outgoing }
+import 'package:hive/hive.dart';
 
+part 'stock_transaction.g.dart';
+
+@HiveType(typeId: 1)
+enum TransactionType {
+  @HiveField(0)
+  incoming,
+  
+  @HiveField(1)
+  outgoing
+}
+
+@HiveType(typeId: 2)
 class StockTransaction {
+  @HiveField(0)
   final String id;
+  
+  @HiveField(1)
   final String itemId;
+  
+  @HiveField(2)
   final String itemName;
+  
+  @HiveField(3)
   final TransactionType type;
+  
+  @HiveField(4)
   final int quantity;
+  
+  @HiveField(5)
   final DateTime date;
+  
+  @HiveField(6)
   final String? note;
+  
+  @HiveField(7)
   final String? performedBy;
 
   StockTransaction({

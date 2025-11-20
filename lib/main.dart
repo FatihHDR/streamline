@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'models/stock_item.dart';
+import 'models/stock_transaction.dart';
 import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
@@ -12,6 +15,14 @@ void main() async {
   
   // Load environment variables
   await dotenv.load(fileName: '.env');
+  
+  // Initialize Hive for local storage
+  await Hive.initFlutter();
+  
+  // Register Hive adapters
+  Hive.registerAdapter(StockItemAdapter());
+  Hive.registerAdapter(StockTransactionAdapter());
+  Hive.registerAdapter(TransactionTypeAdapter());
   
   // Initialize Supabase
   await Supabase.initialize(
