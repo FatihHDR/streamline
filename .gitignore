@@ -50,3 +50,7 @@ app.*.map.json
 **/GeneratedPluginRegistrant.swift
 **/generated_plugins.cmake
 **/generated_plugin_registrant.cc
+
+# Hive generated files
+**/*.g.dart
+**/*.hive
