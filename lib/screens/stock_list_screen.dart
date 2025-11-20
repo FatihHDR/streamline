@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../models/stock_item.dart';
-import '../providers/inventory_provider.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 import '../widgets/animation_mode_selector.dart';
 
 class StockListScreen extends StatefulWidget {
@@ -19,41 +19,19 @@ class _StockListScreenState extends State<StockListScreen>
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
   late AnimationController _listController;
-
-  List<String> get categories {
-    final items = context.read<InventoryProvider>().items;
-    final cats = items.map((e) => e.category).toSet().toList();
-    return ['Semua', ...cats];
-  }
-
-  List<StockItem> get filteredItems {
-    final items = context.read<InventoryProvider>().items;
-    return items.where((item) {
-      final matchesSearch =
-          item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.description?.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ==
-              true;
-      final matchesCategory =
-          _selectedCategory == 'Semua' || item.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
-  }
+  late final InventoryController _inventoryController;
 
   @override
   void initState() {
     super.initState();
+    _inventoryController = Get.find<InventoryController>();
     _listController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
 
     // Load data when screen initializes
-    Future.microtask(() {
-      final provider = Provider.of<InventoryProvider>(context, listen: false);
-      provider.loadStockItems();
-    });
+    Future.microtask(() => _inventoryController.loadStockItems());
   }
 
   @override
@@ -69,28 +47,33 @@ class _StockListScreenState extends State<StockListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final inventoryProvider = context.watch<InventoryProvider>();
+    return Obx(() {
+      final error = _inventoryController.itemsError.value;
+      if (error != null) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(error),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () =>
+                    _inventoryController.loadStockItems(force: true),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      }
 
-    if (inventoryProvider.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(inventoryProvider.error!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => inventoryProvider.loadStockItems(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
+      final items = _inventoryController.items.toList();
+      final categories = _buildCategories(items);
+      final filteredItems = _filterItems(items);
 
-    return Column(
-      children: [
+      return Column(
+        children: [
         // Search and Filter Section
         Container(
           color: Colors.white,
@@ -129,30 +112,50 @@ class _StockListScreenState extends State<StockListScreen>
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
-              await context.read<InventoryProvider>().loadStockItems();
+              await _inventoryController.loadStockItems(force: true);
             },
-            child: inventoryProvider.isLoading
+            child: _inventoryController.isItemsLoading.value
                 ? const Center(child: CircularProgressIndicator())
                 : filteredItems.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredItems.length,
-                    itemBuilder: (context, index) {
-                      final item = filteredItems[index];
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredItems.length,
+                        itemBuilder: (context, index) {
+                          final item = filteredItems[index];
 
-                      if (widget.animationMode ==
-                          AnimationMode.animatedContainer) {
-                        return _buildAnimatedStockCard(item, index);
-                      } else {
-                        return _buildControllerStockCard(item, index);
-                      }
-                    },
-                  ),
+                          if (widget.animationMode ==
+                              AnimationMode.animatedContainer) {
+                            return _buildAnimatedStockCard(item, index);
+                          } else {
+                            return _buildControllerStockCard(item, index);
+                          }
+                        },
+                      ),
           ),
         ),
-      ],
-    );
+        ],
+      );
+    });
+  }
+
+  List<String> _buildCategories(List<StockItem> source) {
+    final cats = source.map((e) => e.category).toSet().toList();
+    return ['Semua', ...cats];
+  }
+
+  List<StockItem> _filterItems(List<StockItem> source) {
+    return source.where((item) {
+      final matchesSearch =
+          item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              item.description?.toLowerCase().contains(
+                    _searchQuery.toLowerCase(),
+                  ) ==
+                  true;
+      final matchesCategory =
+          _selectedCategory == 'Semua' || item.category == _selectedCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
   }
 
   Widget _buildAnimatedSearchBar() {

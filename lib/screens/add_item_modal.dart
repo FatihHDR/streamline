@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../data/dummy_data.dart';
 import '../models/stock_item.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 import '../utils/app_theme.dart';
 
 class AddItemModal extends StatefulWidget {
@@ -20,8 +21,15 @@ class _AddItemModalState extends State<AddItemModal> {
   final _locationController = TextEditingController();
   final _minStockController = TextEditingController(text: '0');
   final _descriptionController = TextEditingController();
+  late final InventoryController _inventoryController;
 
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _inventoryController = Get.find<InventoryController>();
+  }
 
   @override
   void dispose() {
@@ -60,8 +68,7 @@ class _AddItemModalState extends State<AddItemModal> {
       description: description,
     );
 
-    // Add to DummyData (in-memory for now)
-    DummyData.stockItems.insert(0, newItem);
+    _inventoryController.addItem(newItem);
 
     // Small delay to show loading state on submit button
     Future.delayed(const Duration(milliseconds: 200), () {

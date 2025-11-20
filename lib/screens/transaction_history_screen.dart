@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../models/stock_transaction.dart';
-import '../providers/inventory_provider.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 import '../widgets/animation_mode_selector.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
@@ -19,34 +19,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     with SingleTickerProviderStateMixin {
   String _filterType = 'Semua';
   late AnimationController _refreshController;
-
-  List<StockTransaction> get filteredTransactions {
-    final transactions = context.read<InventoryProvider>().transactions;
-    if (_filterType == 'Semua') {
-      return transactions;
-    }
-    return transactions.where((t) {
-      if (_filterType == 'Masuk') {
-        return t.type == TransactionType.incoming;
-      } else {
-        return t.type == TransactionType.outgoing;
-      }
-    }).toList();
-  }
+  late final InventoryController _inventoryController;
 
   @override
   void initState() {
     super.initState();
+    _inventoryController = Get.find<InventoryController>();
     _refreshController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     )..forward();
 
     // Load data when screen initializes
-    Future.microtask(() {
-      final provider = Provider.of<InventoryProvider>(context, listen: false);
-      provider.loadTransactions();
-    });
+    Future.microtask(() => _inventoryController.loadTransactions());
   }
 
   @override
@@ -62,61 +47,119 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Header and Filter
-        Container(
-          color: Colors.white,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Riwayat Transaksi',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+    return Obx(() {
+      final error = _inventoryController.transactionsError.value;
+      final transactions = _inventoryController.transactions.toList();
+      final filteredTransactions = _filteredTransactions(transactions);
+      final isLoading = _inventoryController.isTransactionsLoading.value;
+
+      return Column(
+        children: [
+          // Header and Filter
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Riwayat Transaksi',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              // Filter Tabs
-              Row(
-                children: [
-                  Expanded(child: _buildFilterTab('Semua')),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildFilterTab('Masuk')),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildFilterTab('Keluar')),
+                const SizedBox(height: 16),
+                // Filter Tabs
+                Row(
+                  children: [
+                    Expanded(child: _buildFilterTab('Semua')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFilterTab('Masuk')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFilterTab('Keluar')),
+                  ],
+                ),
+                if (error != null) ...[
+                  const SizedBox(height: 12),
+                  _buildErrorBanner(error),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        // Transaction List
-        Expanded(
-          child: filteredTransactions.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredTransactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = filteredTransactions[index];
+          // Transaction List
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredTransactions.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredTransactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = filteredTransactions[index];
 
-                    if (widget.animationMode ==
-                        AnimationMode.animatedContainer) {
-                      return _buildAnimatedTransactionCard(transaction, index);
-                    } else {
-                      return _buildControllerTransactionCard(
-                        transaction,
-                        index,
-                      );
-                    }
-                  },
-                ),
-        ),
-      ],
+                          if (widget.animationMode ==
+                              AnimationMode.animatedContainer) {
+                            return _buildAnimatedTransactionCard(
+                              transaction,
+                              index,
+                            );
+                          } else {
+                            return _buildControllerTransactionCard(
+                              transaction,
+                              index,
+                            );
+                          }
+                        },
+                      ),
+          ),
+        ],
+      );
+    });
+  }
+
+  List<StockTransaction> _filteredTransactions(
+    List<StockTransaction> source,
+  ) {
+    if (_filterType == 'Semua') {
+      return source;
+    }
+    return source.where((t) {
+      if (_filterType == 'Masuk') {
+        return t.type == TransactionType.incoming;
+      } else {
+        return t.type == TransactionType.outgoing;
+      }
+    }).toList();
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.dangerColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: AppTheme.dangerColor, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              error,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          TextButton(
+            onPressed: () => _inventoryController.loadTransactions(force: true),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
     );
   }
 

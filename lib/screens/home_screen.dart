@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../utils/app_theme.dart';
-import '../providers/inventory_provider.dart';
 import '../widgets/animation_mode_selector.dart';
 import '../experiments/controllers/experiment_controller.dart';
 import '../widgets/network_mode_selector.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
 import 'stock_list_screen.dart';
@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   AnimationMode _animationMode = AnimationMode.animationController;
   NetworkMode _networkMode = NetworkMode.dio;
+  late final InventoryController _inventoryController;
 
   void _onAnimationModeChanged(AnimationMode mode) {
     setState(() {
@@ -47,19 +48,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data when the screen is initialized
-    Future.microtask(() {
-      final provider = Provider.of<InventoryProvider>(context, listen: false);
-      provider.loadStockItems();
-      provider.loadTransactions();
-    });
+    _inventoryController = Get.find<InventoryController>();
+    Future.microtask(() => _inventoryController.initializeData());
   }
 
   @override
   Widget build(BuildContext context) {
-    final inventoryProvider = Provider.of<InventoryProvider>(context);
-    final lowStockCount = inventoryProvider.getLowStockItems().length;
-
     // navigation icon helper removed — custom BottomAppBar is used instead
     return Scaffold(
       extendBody: true,
@@ -233,13 +227,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
 
                 // Stok Barang (with badge)
-                _buildNavItem(
-                  index: 1,
-                  icon: Icons.inventory_2_outlined,
-                  activeIcon: Icons.inventory_2,
-                  label: 'Stok',
-                  badgeCount: lowStockCount,
-                ),
+                Obx(() {
+                  final lowStockCount =
+                      _inventoryController.lowStockItems.length;
+                  return _buildNavItem(
+                    index: 1,
+                    icon: Icons.inventory_2_outlined,
+                    activeIcon: Icons.inventory_2,
+                    label: 'Stok',
+                    badgeCount: lowStockCount,
+                  );
+                }),
 
                 // Center add button as part of the nav bar
                 SizedBox(

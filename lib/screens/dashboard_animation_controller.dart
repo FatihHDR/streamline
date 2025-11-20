@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../utils/app_theme.dart';
-import '../data/dummy_data.dart';
 import '../models/stock_item.dart';
 import '../widgets/stat_card_controller.dart';
 import '../widgets/stock_chart_controller.dart';
 import '../widgets/low_stock_alert_controller.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 
 class DashboardAnimationController extends StatefulWidget {
   const DashboardAnimationController({super.key});
@@ -20,19 +21,20 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late final InventoryController _inventoryController;
 
-  int get totalItems => DummyData.stockItems.length;
-  int get totalQuantity => DummyData.stockItems.fold(0, (sum, item) => sum + item.quantity);
-  int get lowStockItems => DummyData.stockItems.where((item) => item.isLowStock).length;
-  int get outOfStockItems => DummyData.stockItems.where((item) => item.isOutOfStock).length;
-  
-  List<StockItem> get lowStockList => DummyData.stockItems
-      .where((item) => item.isLowStock)
-      .toList();
+  int get totalItems => _inventoryController.items.length;
+  int get totalQuantity =>
+    _inventoryController.items.fold(0, (sum, item) => sum + item.quantity);
+  int get lowStockItems => _inventoryController.lowStockItems.length;
+  int get outOfStockItems => _inventoryController.outOfStockCount;
+
+  List<StockItem> get lowStockList => _inventoryController.lowStockItems;
 
   @override
   void initState() {
     super.initState();
+    _inventoryController = Get.find<InventoryController>();
     
     // Header animation controller (set duration so animations run)
     _headerController = AnimationController(
@@ -111,11 +113,12 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
           _refreshDashboard();
         });
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-  // Add extra buffer to ensure content doesn't overflow under the bottom nav
-  padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
-        child: Column(
+      child: Obx(() {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          // Add extra buffer to ensure content doesn't overflow under the bottom nav
+          padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Animated Header dengan AnimationController
@@ -162,7 +165,7 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Column(
+                          child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
@@ -255,7 +258,8 @@ class _DashboardAnimationControllerState extends State<DashboardAnimationControl
             ),
           ],
         ),
-      ),
+      );
+      }),
     );
   }
 }

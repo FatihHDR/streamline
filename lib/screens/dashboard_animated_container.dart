@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../models/stock_item.dart';
-import '../providers/inventory_provider.dart';
+import '../modules/inventory/controllers/inventory_controller.dart';
 import '../widgets/stat_card_animated.dart';
 import '../widgets/stock_chart_animated.dart';
 import '../widgets/low_stock_alert_animated.dart';
@@ -18,22 +18,13 @@ class DashboardAnimatedContainer extends StatefulWidget {
 class _DashboardAnimatedContainerState
     extends State<DashboardAnimatedContainer> {
   bool _isExpanded = false;
+  late final InventoryController _inventoryController;
 
-  int get totalItems => context.read<InventoryProvider>().items.length;
-  int get totalQuantity => context.read<InventoryProvider>().items.fold(
-    0,
-    (sum, item) => sum + item.quantity,
-  );
-  int get lowStockItems =>
-      context.read<InventoryProvider>().getLowStockItems().length;
-  int get outOfStockItems => context
-      .read<InventoryProvider>()
-      .items
-      .where((item) => item.isOutOfStock)
-      .length;
-
-  List<StockItem> get lowStockList =>
-      context.read<InventoryProvider>().getLowStockItems();
+  @override
+  void initState() {
+    super.initState();
+    _inventoryController = Get.find<InventoryController>();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +33,23 @@ class _DashboardAnimatedContainerState
 
     return RefreshIndicator(
       onRefresh: () async {
-        final provider = context.read<InventoryProvider>();
-        await Future.wait([
-          provider.loadStockItems(),
-          provider.loadTransactions(),
-        ]);
+        await _inventoryController.refreshAll();
         setState(() {
           _isExpanded = !_isExpanded;
         });
       },
-      child: SingleChildScrollView(
+      child: Obx(
+        () {
+            final items = _inventoryController.items;
+          final totalItems = items.length;
+          final totalQuantity =
+              items.fold(0, (sum, item) => sum + item.quantity);
+            final List<StockItem> lowStockList =
+              _inventoryController.lowStockItems;
+          final lowStockItems = lowStockList.length;
+          final outOfStockItems = _inventoryController.outOfStockCount;
+
+          return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         // Add extra buffer to ensure content doesn't overflow under the bottom nav
         padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
@@ -195,6 +193,8 @@ class _DashboardAnimatedContainerState
             LowStockAlertAnimated(lowStockItems: lowStockList),
           ],
         ),
+          );
+        },
       ),
     );
   }
