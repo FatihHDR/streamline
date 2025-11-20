@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../widgets/animation_mode_selector.dart';
+import '../services/preferences_service.dart';
 import '../experiments/controllers/experiment_controller.dart';
 import '../widgets/network_mode_selector.dart';
 import '../modules/inventory/controllers/inventory_controller.dart';
@@ -23,11 +24,18 @@ class _HomeScreenState extends State<HomeScreen> {
   AnimationMode _animationMode = AnimationMode.animationController;
   NetworkMode _networkMode = NetworkMode.dio;
   late final InventoryController _inventoryController;
+  late final PreferencesService _prefsService;
 
-  void _onAnimationModeChanged(AnimationMode mode) {
+  Future<void> _onAnimationModeChanged(AnimationMode mode) async {
     setState(() {
       _animationMode = mode;
     });
+    
+    // Save preference
+    final modeString = mode == AnimationMode.animatedContainer 
+        ? 'animated_container' 
+        : 'animation_controller';
+    await _prefsService.setAnimationMode(modeString);
   }
 
   Widget _getSelectedScreen() {
@@ -49,6 +57,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _inventoryController = Get.find<InventoryController>();
+    _prefsService = Get.find<PreferencesService>();
+    
+    // Load saved animation mode preference
+    final savedMode = _prefsService.getAnimationMode();
+    if (savedMode == 'animated_container') {
+      _animationMode = AnimationMode.animatedContainer;
+    } else {
+      _animationMode = AnimationMode.animationController;
+    }
+    
     Future.microtask(() => _inventoryController.initializeData());
   }
 

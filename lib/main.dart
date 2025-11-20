@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
 import 'services/auth_service.dart';
+import 'services/preferences_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,10 @@ void main() async {
   } catch (e) {
     debugPrint('Auto sign-in failed: $e');
   }
+  
+  // Initialize preferences service
+  final prefsService = Get.put(PreferencesService());
+  await prefsService.onInit();
   
   runApp(const StreamlineApp());
 }
