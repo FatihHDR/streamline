@@ -47,4 +47,32 @@ class StockItem {
       description: description ?? this.description,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'quantity': quantity,
+      'unit': unit,
+      'last_updated': lastUpdated.toIso8601String(),
+      'location': location,
+      'min_stock': minStock,
+      'description': description,
+    };
+  }
+
+  factory StockItem.fromJson(Map<String, dynamic> json) {
+    return StockItem(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      category: json['category'] as String,
+      quantity: json['quantity'] as int,
+      unit: json['unit'] as String,
+      lastUpdated: DateTime.parse(json['last_updated'] as String),
+      location: json['location'] as String,
+      minStock: json['min_stock'] as int,
+      description: json['description'] as String?,
+    );
+  }
 }
