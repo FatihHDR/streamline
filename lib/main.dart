@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/stock_item.dart';
 import 'models/stock_transaction.dart';
 import 'models/pending_operation.dart';
+import 'modules/location/models/location_data.dart';
 import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
@@ -28,6 +29,8 @@ void main() async {
   Hive.registerAdapter(TransactionTypeAdapter());
   Hive.registerAdapter(PendingOperationAdapter());
   Hive.registerAdapter(OperationTypeAdapter());
+  Hive.registerAdapter(LocationDataAdapter());
+  Hive.registerAdapter(LocationExperimentAdapter());
   
   // Initialize Supabase
   await Supabase.initialize(

@@ -7,6 +7,9 @@ import '../services/preferences_service.dart';
 import '../experiments/controllers/experiment_controller.dart';
 import '../widgets/network_mode_selector.dart';
 import '../modules/inventory/controllers/inventory_controller.dart';
+import '../modules/location/bindings/location_binding.dart';
+import '../modules/location/controllers/location_controller.dart';
+import '../modules/location/views/location_dashboard_view.dart';
 import 'dashboard_animated_container.dart';
 import 'dashboard_animation_controller.dart';
 import 'stock_list_screen.dart';
@@ -39,6 +42,56 @@ class _HomeScreenState extends State<HomeScreen> {
     await _prefsService.setAnimationMode(modeString);
   }
 
+  Future<void> _testNetworkMode() async {
+    final expC = ExperimentController();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Testing ${_networkMode.name}...')),
+    );
+    try {
+      final res = _networkMode == NetworkMode.http
+          ? await expC.httpService.fetchPost(1)
+          : await expC.dioService.fetchPost(1);
+      if (!mounted) return;
+      final statusMsg = res.success ? 'OK' : 'ERR';
+      final errPart = res.error != null && res.error!.isNotEmpty ? ' — ${res.error}' : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${_networkMode.name}: $statusMsg ${res.statusCode} in ${res.durationMs}ms$errPart'),
+        ),
+      );
+
+      if (_networkMode == NetworkMode.dio && mounted) {
+        showModalBottomSheet(
+          context: context,
+          builder: (_) => Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Dio logs (recent)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                if (res.error != null && res.error!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text('Error: ${res.error}', style: const TextStyle(color: Colors.redAccent)),
+                  ),
+                if (expC.dioLogs.isEmpty) const Text('No logs'),
+                ...expC.dioLogs.reversed.take(20).map((e) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6.0),
+                      child: Text(e),
+                    )),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   Widget _getSelectedScreen() {
     switch (_selectedIndex) {
       case 0:
@@ -49,6 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return StockListScreen(animationMode: _animationMode);
       case 2:
         return TransactionHistoryScreen(animationMode: _animationMode);
+      case 3:
+        return const LocationDashboardView();
       default:
         return const DashboardAnimatedContainer();
     }
@@ -59,6 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _inventoryController = Get.find<InventoryController>();
     _prefsService = Get.find<PreferencesService>();
+    
+    // Initialize Location Module bindings
+    if (!Get.isRegistered<LocationController>()) {
+      LocationBinding().dependencies();
+    }
     
     // Load saved animation mode preference
     final savedMode = _prefsService.getAnimationMode();
@@ -78,17 +138,16 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
       // Custom modern header
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(84),
+        preferredSize: const Size.fromHeight(70),
         child: SafeArea(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppTheme.backgroundColor, Colors.white],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
-              // subtle bottom border radius to blend into content
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.02),
@@ -99,15 +158,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Row(
               children: [
+                // Logo
                 ClipOval(
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
+                // Title
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -115,107 +176,92 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Streamline',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 2),
                     Text(
                       'Dashboard',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
                     ),
                   ],
                 ),
-                const SizedBox(width: 18),
-                // Search / quick filter
+                const SizedBox(width: 12),
+                // Search field - takes remaining space
                 Expanded(
                   child: Container(
-                    height: 40,
-                    alignment: Alignment.center,
+                    height: 36,
                     child: TextField(
+                      style: const TextStyle(fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'Cari produk, kode, atau kategori',
-                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Cari produk...',
+                        hintStyle: const TextStyle(fontSize: 12),
+                        prefixIcon: const Icon(Icons.search, size: 18),
                         isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
+                // Sync indicator
                 const SyncStatusIndicator(),
-                const SizedBox(width: 8),
-                AnimationModeSelector(
-                  currentMode: _animationMode,
-                  onModeChanged: _onAnimationModeChanged,
-                ),
-                const SizedBox(width: 8),
-                // Network mode selector placed alongside animation mode
-                Row(
-                  children: [
-                    NetworkModeSelector(
-                      currentMode: _networkMode,
-                      onModeChanged: (m) => setState(() => _networkMode = m),
+                const SizedBox(width: 4),
+                // More options menu for selectors
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Pengaturan',
+                  onSelected: (value) async {
+                    if (value == 'test_network') {
+                      _testNetworkMode();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Mode Animasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          AnimationModeSelector(
+                            currentMode: _animationMode,
+                            onModeChanged: (mode) {
+                              Navigator.pop(context);
+                              _onAnimationModeChanged(mode);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    // test button (play)
-                    InkWell(
-                      onTap: () async {
-                        final expC = ExperimentController();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Testing ${_networkMode.name}...')));
-                        try {
-                          final res = _networkMode == NetworkMode.http
-                              ? await expC.httpService.fetchPost(1)
-                              : await expC.dioService.fetchPost(1);
-                          if (!mounted) return;
-                          final statusMsg = res.success ? 'OK' : 'ERR';
-                          final errPart = res.error != null && res.error!.isNotEmpty ? ' — ${res.error}' : '';
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${_networkMode.name} result: $statusMsg ${res.statusCode} in ${res.durationMs} ms$errPart'),
-                            ),
-                          );
-
-                          if (_networkMode == NetworkMode.dio) {
-                            if (!mounted) return;
-                            // show recent dio logs + error (if any)
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (_) => Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Dio logs (recent)', style: TextStyle(fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 8),
-                                    if (res.error != null && res.error!.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(bottom: 8.0),
-                                        child: Text('Error: ${res.error}', style: const TextStyle(color: Colors.redAccent)),
-                                      ),
-                                    if (expC.dioLogs.isEmpty) const Text('No logs'),
-                                    ...expC.dioLogs.reversed.take(20).map((e) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 6.0),
-                                          child: Text(e),
-                                        )),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+                    const PopupMenuDivider(),
+                    PopupMenuItem<String>(
+                      enabled: false,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Mode Network', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          const SizedBox(height: 4),
+                          NetworkModeSelector(
+                            currentMode: _networkMode,
+                            onModeChanged: (m) {
+                              Navigator.pop(context);
+                              setState(() => _networkMode = m);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem<String>(
+                      value: 'test_network',
+                      child: Row(
+                        children: [
+                          Icon(Icons.play_arrow, size: 18, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('Test Network', style: TextStyle(fontSize: 13)),
+                        ],
                       ),
                     ),
                   ],
@@ -312,6 +358,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.history_outlined,
                   activeIcon: Icons.history,
                   label: 'Riwayat',
+                ),
+                
+                // Location Experiments
+                _buildNavItem(
+                  index: 3,
+                  icon: Icons.location_on_outlined,
+                  activeIcon: Icons.location_on,
+                  label: 'Lokasi',
                 ),
               ],
             ),
