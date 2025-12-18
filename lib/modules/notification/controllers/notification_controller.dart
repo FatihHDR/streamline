@@ -208,7 +208,7 @@ class NotificationController extends GetxController {
 
   /// Create a test notification (for development)
   Future<void> createTestNotification() async {
-    final testNotification = NotificationItem(
+    final testNotification = NotificationItem.withData(
       id: 'test_${DateTime.now().millisecondsSinceEpoch}',
       title: '🧪 Test Notification',
       body: 'This is a test notification created at ${DateTime.now().toString()}',

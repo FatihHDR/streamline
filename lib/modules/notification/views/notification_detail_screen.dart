@@ -107,7 +107,7 @@ class NotificationDetailScreen extends StatelessWidget {
             ),
             
             // Additional data (if any)
-            if (notification.data.isNotEmpty) ...[
+            if (notification.data != null && notification.data!.isNotEmpty) ...[
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 24),
@@ -122,7 +122,7 @@ class NotificationDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               
-              ...notification.data.entries.map((entry) {
+              ...notification.data!.entries.map((entry) {
                 // Skip internal fields
                 if (entry.key == 'screen' || entry.key == 'type') {
                   return const SizedBox.shrink();
@@ -236,7 +236,7 @@ class NotificationDetailScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  final itemId = notification.data['item_id'];
+                  final itemId = notification.data?['item_id'];
                   if (itemId != null) {
                     Get.offAllNamed('/home', arguments: {
                       'initialTab': 1,

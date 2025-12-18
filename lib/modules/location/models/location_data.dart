@@ -10,7 +10,7 @@ enum LocationProvider {
 }
 
 /// Model untuk menyimpan data lokasi hasil pengukuran
-@HiveType(typeId: 10)
+@HiveType(typeId: 12)
 class LocationData extends HiveObject {
   @HiveField(0)
   final String id;

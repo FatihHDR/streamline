@@ -12,9 +12,8 @@ class PreferencesService extends GetxController {
   final RxString animationMode = 'animated_container'.obs;
   final Rxn<DateTime> lastSyncTime = Rxn<DateTime>();
 
-  @override
-  Future<void> onInit() async {
-    super.onInit();
+  /// Initialize the service
+  Future<void> init() async {
     await _initPreferences();
     await _loadPreferences();
   }

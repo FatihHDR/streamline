@@ -86,38 +86,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Animated Logo
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.3),
-                              blurRadius: 40,
-                              spreadRadius: 10,
-                            ),
-                          ],
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          blurRadius: 40,
+                          spreadRadius: 10,
                         ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'lib/widgets/assets/streamline_logo.png',
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'lib/widgets/assets/streamline_logo.png',
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
               const SizedBox(height: 32),
               // App Name
@@ -139,7 +134,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: Text(
                   'Manajemen Stok Gudang',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.5,
@@ -156,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: CircularProgressIndicator(
                     strokeWidth: 3,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.8),
+                      Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                 ),
