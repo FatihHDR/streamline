@@ -57,6 +57,7 @@ void main() async {
       Hive.registerAdapter(StockTransactionAdapter());
       Hive.registerAdapter(TransactionTypeAdapter());
       Hive.registerAdapter(PendingOperationAdapter());
+      Hive.registerAdapter(OperationTypeAdapter());
       Hive.registerAdapter(LocationDataAdapter());
       Hive.registerAdapter(LocationExperimentAdapter());
       Hive.registerAdapter(NotificationItemAdapter());
