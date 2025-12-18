@@ -3,9 +3,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'models/stock_item.dart';
 import 'models/stock_transaction.dart';
 import 'models/pending_operation.dart';
+import 'models/notification_item.dart';
 import 'modules/location/models/location_data.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,15 +18,27 @@ import 'screens/profile_screen.dart';
 import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
+import 'modules/notification/bindings/notification_binding.dart';
+import 'modules/notification/views/notification_list_screen.dart';
+import 'modules/notification/views/notification_detail_screen.dart';
 import 'services/auth_service.dart';
 import 'services/preferences_service.dart';
 import 'services/sync_queue_service.dart';
+import 'services/fcm_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load environment variables
   await dotenv.load(fileName: '.env');
+  
+  // Initialize Firebase with options
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Set up Firebase Messaging background handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   
   // Initialize Hive for local storage
   await Hive.initFlutter();
@@ -34,6 +50,7 @@ void main() async {
   Hive.registerAdapter(PendingOperationAdapter());
   Hive.registerAdapter(LocationDataAdapter());
   Hive.registerAdapter(LocationExperimentAdapter());
+  Hive.registerAdapter(NotificationItemAdapter());
   
   // Initialize Supabase
   await Supabase.initialize(
@@ -51,6 +68,10 @@ void main() async {
   // Initialize sync queue service
   final syncQueueService = Get.put(SyncQueueService());
   await syncQueueService.init();
+  
+  // Initialize FCM notification service
+  final fcmNotificationService = Get.put(FCMNotificationService());
+  await fcmNotificationService.init();
   
   runApp(const StreamlineApp());
 }
@@ -74,6 +95,19 @@ class StreamlineApp extends StatelessWidget {
         GetPage(name: '/register', page: () => const RegisterScreen()),
         GetPage(name: '/home', page: () => const HomeScreen()),
         GetPage(name: '/profile', page: () => const ProfileScreen()),
+        GetPage(
+          name: '/notifications',
+          page: () => const NotificationListScreen(),
+          binding: NotificationBinding(),
+        ),
+        GetPage(
+          name: '/notifications/detail',
+          page: () {
+            final args = Get.arguments as Map<String, dynamic>;
+            final notification = args['notification'] as NotificationItem;
+            return NotificationDetailScreen(notification: notification);
+          },
+        ),
       ],
     );
   }
