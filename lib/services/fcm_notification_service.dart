@@ -122,8 +122,8 @@ class FCMNotificationService extends GetxService {
   /// Create Android notification channel
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'streamline_warehouse_channel', // id
-      'Warehouse Notifications', // name
+      'streamline_warehouse_channel_v2', // id
+      'Warehouse Notifications V2', // name
       description: 'Notifications for warehouse inventory management',
       importance: Importance.high,
       playSound: true,
@@ -200,8 +200,8 @@ class FCMNotificationService extends GetxService {
       // Prepare notification details with custom sound
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-        'streamline_warehouse_channel',
-        'Warehouse Notifications',
+        'streamline_warehouse_channel_v2',
+        'Warehouse Notifications V2',
         channelDescription: 'Notifications for warehouse inventory management',
         importance: Importance.high,
         priority: Priority.high,
@@ -335,10 +335,10 @@ class FCMNotificationService extends GetxService {
 
     // Prepare notification details
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'streamline_warehouse_channel',
-      'Warehouse Notifications',
+      'streamline_warehouse_channel_v2',
+      'Warehouse Notifications V2',
       channelDescription: 'Notifications for warehouse inventory management',
-      importance: Importance.high,
+      importance: Importance.high, 
       priority: Priority.high,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('notification_sound'),
