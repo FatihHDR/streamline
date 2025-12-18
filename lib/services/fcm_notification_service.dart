@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
+import '../models/notification_item.dart';
+import '../modules/notification/controllers/notification_controller.dart';
 
 /// Background message handler - MUST be top-level function
 @pragma('vm:entry-point')
@@ -127,7 +129,7 @@ class FCMNotificationService extends GetxService {
       playSound: true,
       sound: RawResourceAndroidNotificationSound('notification_sound'),
       enableVibration: true,
-      showBadge: true,
+      // showBadge parameter is removed in newer versions or controlled via channel
     );
 
     await _localNotifications
@@ -217,7 +219,7 @@ class FCMNotificationService extends GetxService {
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
-          sound: 'notification_sound.mp3',
+          sound: 'notification_sound.wav',
         ),
       );
 
@@ -315,15 +317,110 @@ class FCMNotificationService extends GetxService {
     }
   }
 
-  /// Store notification for history (using Hive or database)
-  static Future<void> storeNotification(RemoteMessage message) async {
-    // TODO: Implement storage logic using Hive or your preferred method
-    // This would store the notification in local database for the notification history screen
-    logger.i('💾 Storing notification: ${message.messageId}');
+  /// Show a local notification manually
+  Future<void> showNotification({
+    required String title,
+    required String body,
+    String? type,
+    Map<String, dynamic>? data,
+  }) async {
+    // Generate a unique ID for the notification
+    final int id = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     
-    // Example implementation would be:
-    // final box = await Hive.openBox<NotificationItem>('notifications');
-    // await box.add(NotificationItem.fromRemoteMessage(message));
+    // Create combined data
+    final Map<String, dynamic> notificationData = {
+      'type': type ?? 'general',
+      ...?data,
+    };
+
+    // Prepare notification details
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'streamline_warehouse_channel',
+      'Warehouse Notifications',
+      channelDescription: 'Notifications for warehouse inventory management',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      sound: RawResourceAndroidNotificationSound('notification_sound'),
+      enableVibration: true,
+      // showBadge parameter is removed in newer versions or controlled via channel
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'notification_sound.wav',
+      ),
+    );
+
+    // Show the notification
+    await _localNotifications.show(
+      id,
+      title,
+      body,
+      notificationDetails,
+      payload: jsonEncode(notificationData),
+    );
+    
+    // Store in history
+    try {
+      if (Get.isRegistered<NotificationController>()) {
+        final notificationController = Get.find<NotificationController>();
+        
+        final notification = NotificationItem.withData(
+          id: 'local_$id',
+          title: title,
+          body: body,
+          timestamp: DateTime.now(),
+          type: type ?? 'general',
+          isRead: false,
+          data: data,
+        );
+        
+        await notificationController.addNotification(notification);
+      }
+    } catch (e) {
+      print('❌ Error storing local notification: $e');
+    }
+    
+    logger.i('✅ [Obtained Manually] Local notification displayed and stored');
+  }
+
+  /// Store notification for history
+  static Future<void> storeNotification(RemoteMessage message) async {
+    try {
+      if (Get.isRegistered<NotificationController>()) {
+        final notificationController = Get.find<NotificationController>();
+        
+        // Extract data
+        final title = message.notification?.title ?? 'Notification';
+        final body = message.notification?.body ?? '';
+        final data = message.data;
+        
+        // Create model
+        final notification = NotificationItem.withData(
+          id: message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+          title: title,
+          body: body,
+          timestamp: message.sentTime ?? DateTime.now(),
+          type: data['type'] ?? 'general',
+          isRead: false,
+          data: data,
+        );
+        
+        // Add to controller
+        await notificationController.addNotification(notification);
+      }
+    } catch (e) {
+      // Logger might not be available in static context easily if not initialized, 
+      // but we accesses it via class property above. 
+      // However to avoid circular dependency issues or complex imports in static method,
+      // we'll keep it simple.
+      print('❌ Error storing notification: $e');
+    }
   }
 
   /// Subscribe to a topic

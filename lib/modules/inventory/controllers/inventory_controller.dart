@@ -3,6 +3,7 @@ import '../../../models/stock_item.dart';
 import '../../../models/stock_transaction.dart';
 import '../../../providers/i_data_provider.dart';
 import '../../../providers/inventory_data_provider.dart';
+import '../../../services/fcm_notification_service.dart';
 
 class InventoryController extends GetxController {
   InventoryController({IDataProvider? dataProvider})
@@ -106,6 +107,19 @@ class InventoryController extends GetxController {
       final createdItem = await _dataProvider.createStockItem(item);
       items.insert(0, createdItem);
       Get.log('Stock item created: ${createdItem.name}');
+      
+      // Show local notification
+      try {
+        Get.find<FCMNotificationService>().showNotification(
+          title: 'Barang Ditambahkan',
+          body: '${createdItem.name} berhasil ditambahkan ke inventaris.',
+          type: 'general',
+          data: {'item_id': createdItem.id},
+        );
+      } catch (e) {
+        Get.log('Error showing notification: $e', isError: true);
+      }
+      
       return createdItem;
     } catch (e) {
       Get.log('Failed to create stock item: $e', isError: true);
@@ -147,10 +161,47 @@ class InventoryController extends GetxController {
       final createdTransaction = await _dataProvider.createTransaction(transaction);
       transactions.insert(0, createdTransaction);
       Get.log('Transaction created for item: ${transaction.itemName}');
+      
+      // Check for low stock after transaction
+      final item = getItemById(transaction.itemId);
+      if (item != null) {
+        _checkLowStock(item);
+      }
+      
       return createdTransaction;
     } catch (e) {
       Get.log('Failed to create transaction: $e', isError: true);
       rethrow;
     }
+  }
+
+  /// Check for low stock and trigger notification
+  void _checkLowStock(StockItem item) {
+    try {
+      if (item.isOutOfStock) {
+         Get.find<FCMNotificationService>().showNotification(
+          title: 'Stok Habis!',
+          body: 'Stok untuk ${item.name} telah habis. Segera lakukan restock.',
+          type: 'out_of_stock',
+          data: {'item_id': item.id},
+        );
+      } else if (item.isLowStock) {
+        Get.find<FCMNotificationService>().showNotification(
+          title: 'Stok Menipis',
+          body: 'Stok ${item.name} tersisa ${item.quantity} ${item.unit}.',
+          type: 'low_stock',
+          data: {'item_id': item.id},
+        );
+      }
+    } catch (e) {
+      Get.log('Error triggering low stock notification: $e', isError: true);
+    }
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Listen to changes for low stock monitoring could vary, 
+    // but here we trigger on specific actions.
   }
 }
