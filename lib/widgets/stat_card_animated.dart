@@ -26,10 +26,10 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context);
-  final onSurface = theme.colorScheme.onSurface; // reliable text color for surface
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
 
-  return MouseRegion(
+    return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
@@ -37,14 +37,12 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: _isHovered ? widget.color.withOpacity(0.06) : theme.colorScheme.surface,
-            // Keep border radius stable to avoid subtle layout reflows
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: _isHovered ? widget.color.withOpacity(0.6) : theme.dividerColor.withOpacity(0.6),
-              // Keep border width constant to prevent layout shifts
               width: 1,
             ),
             boxShadow: [
@@ -55,89 +53,76 @@ class _StatCardAnimatedState extends State<StatCardAnimated> {
               ),
             ],
           ),
-            child: Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    // fixed padding so the outer layout doesn't change on hover/tap
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: widget.color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: AnimatedScale(
-                      scale: _isHovered ? 1.15 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        widget.icon,
-                        color: widget.color,
-                        size: 20,
-                      ),
+                    child: Icon(
+                      widget.icon,
+                      color: widget.color,
+                      size: 16,
                     ),
                   ),
+                  const Spacer(),
                   if (widget.trend != null)
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
-                      opacity: _isHovered ? 1.0 : 0.6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: widget.trend!.startsWith('+')
-                                ? AppTheme.successColor.withOpacity(0.14)
-                                : widget.trend!.startsWith('-')
-                                    ? AppTheme.dangerColor.withOpacity(0.14)
-                                    : Colors.grey.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            widget.trend!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: widget.trend!.startsWith('+')
-                                  ? AppTheme.successColor
-                                  : widget.trend!.startsWith('-')
-                                      ? AppTheme.dangerColor
-                                      : Colors.grey,
-                            ),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: widget.trend!.startsWith('+')
+                            ? AppTheme.successColor.withOpacity(0.14)
+                            : widget.trend!.startsWith('-')
+                                ? AppTheme.dangerColor.withOpacity(0.14)
+                                : widget.trend == '✓'
+                                    ? AppTheme.successColor.withOpacity(0.14)
+                                    : AppTheme.warningColor.withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        widget.trend!,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: widget.trend!.startsWith('+')
+                              ? AppTheme.successColor
+                              : widget.trend!.startsWith('-')
+                                  ? AppTheme.dangerColor
+                                  : widget.trend == '✓'
+                                      ? AppTheme.successColor
+                                      : AppTheme.warningColor,
                         ),
+                      ),
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
-              // Value (primary numeric) - ensure strong contrast
-              Flexible(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: TextStyle(
-                    // stabilize font size to avoid layout jumps when tapped
-                    fontSize: 20,
-                    fontWeight: _isHovered ? FontWeight.w800 : FontWeight.w700,
-                    color: _isHovered ? widget.color : onSurface,
-                  ),
-                  child: Text(
-                    widget.value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                widget.value,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: _isHovered ? widget.color : onSurface,
+                  height: 1,
                 ),
               ),
-              const SizedBox(height: 6),
-              // Title / label
+              const SizedBox(height: 2),
               Text(
                 widget.title,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: theme.textTheme.bodyMedium?.color ?? AppTheme.textSecondary,
-                  fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 11,
+                  color: AppTheme.textMuted,
+                  fontWeight: FontWeight.w500,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

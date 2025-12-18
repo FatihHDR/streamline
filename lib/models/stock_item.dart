@@ -30,6 +30,9 @@ class StockItem {
   
   @HiveField(8)
   final String? description;
+  
+  @HiveField(9)
+  final String? ownerId;
 
   StockItem({
     required this.id,
@@ -41,6 +44,7 @@ class StockItem {
     required this.location,
     this.minStock = 10,
     this.description,
+    this.ownerId,
   });
 
   bool get isLowStock => quantity <= minStock;
@@ -56,6 +60,7 @@ class StockItem {
     String? location,
     int? minStock,
     String? description,
+    String? ownerId,
   }) {
     return StockItem(
       id: id ?? this.id,
@@ -67,6 +72,7 @@ class StockItem {
       location: location ?? this.location,
       minStock: minStock ?? this.minStock,
       description: description ?? this.description,
+      ownerId: ownerId ?? this.ownerId,
     );
   }
 
@@ -81,6 +87,7 @@ class StockItem {
       'location': location,
       'min_stock': minStock,
       'description': description,
+      if (ownerId != null) 'owner_id': ownerId,
     };
   }
 
@@ -95,6 +102,7 @@ class StockItem {
       location: json['location'] as String,
       minStock: json['min_stock'] as int,
       description: json['description'] as String?,
+      ownerId: json['owner_id'] as String?,
     );
   }
 }

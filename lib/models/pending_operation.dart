@@ -3,9 +3,13 @@ import 'package:hive/hive.dart';
 part 'pending_operation.g.dart';
 
 /// Type of operation to sync with remote server
+@HiveType(typeId: 10)
 enum OperationType {
+  @HiveField(0)
   create,
+  @HiveField(1)
   update,
+  @HiveField(2)
   delete,
 }
 

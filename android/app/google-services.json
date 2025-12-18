@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "549381265348",
+    "project_id": "streamline-480905",
+    "storage_bucket": "streamline-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:549381265348:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.example.streamline"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "549381265348-8r2aq4ahi6ievqhj7dcll3uqj766179n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.streamline",
+            "certificate_hash": "141e156162247c73ff6f757f0ccc7a4c05e029c5"
+          }
+        },
+        {
+          "client_id": "549381265348-REPLACE_WEB_CLIENT.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDummyKeyForGoogleSignIn"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

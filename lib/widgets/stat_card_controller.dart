@@ -83,10 +83,10 @@ class _StatCardControllerState extends State<StatCardController>
         child: GestureDetector(
           onTap: _onTap,
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: widget.color.withOpacity(0.2),
                 width: 1,
@@ -101,90 +101,73 @@ class _StatCardControllerState extends State<StatCardController>
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    RotationTransition(
-                      turns: Tween<double>(begin: 0.0, end: 0.1).animate(
-                        CurvedAnimation(
-                          parent: _controller,
-                          curve: Curves.elasticOut,
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: widget.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: widget.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          widget.icon,
-                          color: widget.color,
-                          size: 20,
-                        ),
+                      child: Icon(
+                        widget.icon,
+                        color: widget.color,
+                        size: 16,
                       ),
                     ),
+                    const Spacer(),
                     if (widget.trend != null)
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: widget.trend!.startsWith('+')
+                              ? AppTheme.successColor.withOpacity(0.14)
+                              : widget.trend!.startsWith('-')
+                                  ? AppTheme.dangerColor.withOpacity(0.14)
+                                  : widget.trend == '✓'
+                                      ? AppTheme.successColor.withOpacity(0.14)
+                                      : AppTheme.warningColor.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          widget.trend!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
                             color: widget.trend!.startsWith('+')
-                                ? AppTheme.successColor.withOpacity(0.2)
+                                ? AppTheme.successColor
                                 : widget.trend!.startsWith('-')
-                                    ? AppTheme.dangerColor.withOpacity(0.2)
-                                    : Colors.grey.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            widget.trend!,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: widget.trend!.startsWith('+')
-                                  ? AppTheme.successColor
-                                  : widget.trend!.startsWith('-')
-                                      ? AppTheme.dangerColor
-                                      : Colors.grey,
-                            ),
+                                    ? AppTheme.dangerColor
+                                    : widget.trend == '✓'
+                                        ? AppTheme.successColor
+                                        : AppTheme.warningColor,
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Flexible(
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.5, end: 1.0).animate(
-                      CurvedAnimation(
-                        parent: _controller,
-                        curve: const Interval(0.3, 1.0, curve: Curves.elasticOut),
-                      ),
-                    ),
-                    child: Text(
-                      widget.value,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: widget.color,
-                      ),
-                    ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.value,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: widget.color,
+                    height: 1,
                   ),
                 ),
                 const SizedBox(height: 2),
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textSecondary,
-                    ),
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textMuted,
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

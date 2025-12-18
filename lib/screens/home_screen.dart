@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../widgets/animation_mode_selector.dart';
@@ -23,19 +24,19 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   AnimationMode _animationMode = AnimationMode.animationController;
   NetworkMode _networkMode = NetworkMode.dio;
   late final InventoryController _inventoryController;
   late final PreferencesService _prefsService;
+  late AnimationController _fabAnimationController;
 
   Future<void> _onAnimationModeChanged(AnimationMode mode) async {
     setState(() {
       _animationMode = mode;
     });
     
-    // Save preference
     final modeString = mode == AnimationMode.animatedContainer 
         ? 'animated_container' 
         : 'animation_controller';
@@ -115,12 +116,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _inventoryController = Get.find<InventoryController>();
     _prefsService = Get.find<PreferencesService>();
     
-    // Initialize Location Module bindings
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    
     if (!Get.isRegistered<LocationController>()) {
       LocationBinding().dependencies();
     }
     
-    // Load saved animation mode preference
     final savedMode = _prefsService.getAnimationMode();
     if (savedMode == 'animated_container') {
       _animationMode = AnimationMode.animatedContainer;
@@ -132,320 +136,500 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // navigation icon helper removed — custom BottomAppBar is used instead
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+    
     return Scaffold(
-      extendBody: true,
-      // Custom modern header
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppTheme.backgroundColor, Colors.white],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Premium App Bar
+            _buildPremiumAppBar(),
+            // Content
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: Padding(
+                  key: ValueKey(_selectedIndex),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _getSelectedScreen(),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                // Logo
-                ClipOval(
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    width: 36,
-                    height: 36,
-                    fit: BoxFit.cover,
-                  ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildPremiumBottomNav(),
+      extendBody: true,
+    );
+  }
+
+  Widget _buildPremiumAppBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Logo with gradient border
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              gradient: AppTheme.accentGradient,
+              shape: BoxShape.circle,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 34,
+                  height: 34,
+                  fit: BoxFit.cover,
                 ),
-                const SizedBox(width: 10),
-                // Title
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
                     Text(
                       'Streamline',
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    Text(
-                      'Dashboard',
-                      style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.accentGradient,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
-                // Search field - takes remaining space
-                Expanded(
-                  child: Container(
-                    height: 36,
-                    child: TextField(
-                      style: const TextStyle(fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Cari produk...',
-                        hintStyle: const TextStyle(fontSize: 12),
-                        prefixIcon: const Icon(Icons.search, size: 18),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                    ),
+                const SizedBox(height: 2),
+                Text(
+                  _getScreenTitle(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.textMuted,
                   ),
-                ),
-                const SizedBox(width: 8),
-                // Sync indicator
-                const SyncStatusIndicator(),
-                const SizedBox(width: 4),
-                // More options menu for selectors
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  padding: EdgeInsets.zero,
-                  tooltip: 'Pengaturan',
-                  onSelected: (value) async {
-                    if (value == 'test_network') {
-                      _testNetworkMode();
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem<String>(
-                      enabled: false,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Mode Animasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          const SizedBox(height: 4),
-                          AnimationModeSelector(
-                            currentMode: _animationMode,
-                            onModeChanged: (mode) {
-                              Navigator.pop(context);
-                              _onAnimationModeChanged(mode);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<String>(
-                      enabled: false,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Mode Network', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          const SizedBox(height: 4),
-                          NetworkModeSelector(
-                            currentMode: _networkMode,
-                            onModeChanged: (m) {
-                              Navigator.pop(context);
-                              setState(() => _networkMode = m);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'test_network',
-                      child: Row(
-                        children: [
-                          Icon(Icons.play_arrow, size: 18, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text('Test Network', style: TextStyle(fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: _getSelectedScreen(),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: AppTheme.cardColor,
-        elevation: 8,
-        child: SafeArea(
-          child: SizedBox(
-            height: kBottomNavigationBarHeight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Dashboard
-                _buildNavItem(
-                  index: 0,
-                  icon: Icons.dashboard_outlined,
-                  activeIcon: Icons.dashboard,
-                  label: 'Dashboard',
+          // Sync indicator
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const SyncStatusIndicator(),
+          ),
+          const SizedBox(width: 8),
+          // Profile button
+          Material(
+            color: AppTheme.surfaceColor,
+            borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Get.toNamed('/profile');
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: const Icon(
+                  Icons.account_circle,
+                  size: 20,
+                  color: AppTheme.textSecondary,
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                // Stok Barang (with badge)
-                Obx(() {
-                  final lowStockCount =
-                      _inventoryController.lowStockItems.length;
-                  return _buildNavItem(
-                    index: 1,
-                    icon: Icons.inventory_2_outlined,
-                    activeIcon: Icons.inventory_2,
-                    label: 'Stok',
-                    badgeCount: lowStockCount,
-                  );
-                }),
-
-                // Center add button as part of the nav bar
-                SizedBox(
-                  width: 80,
-                  child: Center(
-                    child: InkWell(
-                      onTap: () async {
-                        final result = await showModalBottomSheet<bool>(
-                          context: context,
-                          isScrollControlled: true,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(16),
-                            ),
-                          ),
-                          builder: (ctx) => const AddItemModal(),
-                        );
-                        if (result == true) {
-                          setState(() {
-                            _selectedIndex = 1;
-                          });
-                        }
+  void _showSettingsMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.textMuted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Pengaturan',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSettingsSection(
+                    title: 'Mode Animasi',
+                    subtitle: 'Pilih jenis animasi yang digunakan',
+                    child: AnimationModeSelector(
+                      currentMode: _animationMode,
+                      onModeChanged: (mode) {
+                        Navigator.pop(context);
+                        _onAnimationModeChanged(mode);
                       },
-                      borderRadius: BorderRadius.circular(28),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.14),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 28,
-                        ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSettingsSection(
+                    title: 'Mode Network',
+                    subtitle: 'Pilih library untuk HTTP request',
+                    child: NetworkModeSelector(
+                      currentMode: _networkMode,
+                      onModeChanged: (m) {
+                        Navigator.pop(context);
+                        setState(() => _networkMode = m);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _testNetworkMode();
+                      },
+                      icon: const Icon(Icons.speed_rounded, size: 20),
+                      label: const Text('Test Network'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
-                ),
-
-                // Riwayat
-                _buildNavItem(
-                  index: 2,
-                  icon: Icons.history_outlined,
-                  activeIcon: Icons.history,
-                  label: 'Riwayat',
-                ),
-                
-                // Location Experiments
-                _buildNavItem(
-                  index: 3,
-                  icon: Icons.location_on_outlined,
-                  activeIcon: Icons.location_on,
-                  label: 'Lokasi',
-                ),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppTheme.textMuted,
+            ),
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumBottomNav() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Home'),
+            Obx(() => _buildNavItemWithBadge(
+              1, 
+              Icons.inventory_2_outlined, 
+              Icons.inventory_2_rounded, 
+              'Stok',
+              _inventoryController.lowStockItems.length,
+            )),
+            _buildFAB(),
+            _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Riwayat'),
+            _buildNavItem(3, Icons.location_on_outlined, Icons.location_on_rounded, 'Lokasi'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+    final isSelected = _selectedIndex == index;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _selectedIndex = index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
+                size: 22,
+                color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem({
-    required int index,
-    required IconData icon,
-    required IconData activeIcon,
-    required String label,
-    int? badgeCount,
-  }) {
-    final selected = _selectedIndex == index;
-    final color = selected ? AppTheme.primaryColor : Colors.grey.shade600;
-
+  Widget _buildNavItemWithBadge(int index, IconData icon, IconData activeIcon, String label, int badgeCount) {
+    final isSelected = _selectedIndex == index;
+    
     return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedIndex = index),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          setState(() => _selectedIndex = index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icon with optional badge
-              badgeCount == null || badgeCount == 0
-                  ? Icon(selected ? activeIcon : icon, color: color)
-                  : Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(selected ? activeIcon : icon, color: color),
-                        Positioned(
-                          right: -6,
-                          top: -6,
-                          child: Container(
-                            padding: badgeCount > 1
-                                ? const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  )
-                                : const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.warningColor,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.12),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 14,
-                              minHeight: 14,
-                            ),
-                            child: Center(
-                              child: Text(
-                                badgeCount > 1 ? '$badgeCount' : '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? activeIcon : icon,
+                    size: 22,
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                  ),
+                  if (badgeCount > 0)
+                    Positioned(
+                      right: -8,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppTheme.dangerColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16),
+                        child: Text(
+                          badgeCount > 99 ? '99+' : '$badgeCount',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ],
+                      ),
                     ),
+                ],
+              ),
               const SizedBox(height: 4),
-              Text(label, style: TextStyle(fontSize: 11, color: color)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildFAB() {
+    return GestureDetector(
+      onTap: () async {
+        HapticFeedback.mediumImpact();
+        _fabAnimationController.forward().then((_) => _fabAnimationController.reverse());
+        
+        final result = await showModalBottomSheet<bool>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: const AddItemModal(),
+          ),
+        );
+        if (result == true) {
+          setState(() => _selectedIndex = 1);
+        }
+      },
+      child: AnimatedBuilder(
+        animation: _fabAnimationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: 1.0 + (_fabAnimationController.value * 0.1),
+            child: Container(
+              width: 52,
+              height: 52,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _getScreenTitle() {
+    switch (_selectedIndex) {
+      case 0:
+        return 'Ringkasan inventaris hari ini';
+      case 1:
+        return 'Kelola stok barang';
+      case 2:
+        return 'Riwayat transaksi';
+      case 3:
+        return 'Eksperimen lokasi GPS';
+      default:
+        return 'Dashboard';
+    }
   }
 }

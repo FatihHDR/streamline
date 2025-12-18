@@ -7,6 +7,10 @@ import 'models/stock_item.dart';
 import 'models/stock_transaction.dart';
 import 'models/pending_operation.dart';
 import 'modules/location/models/location_data.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/home_screen.dart';
 import 'utils/app_theme.dart';
 import 'modules/inventory/bindings/inventory_binding.dart';
@@ -28,7 +32,6 @@ void main() async {
   Hive.registerAdapter(StockTransactionAdapter());
   Hive.registerAdapter(TransactionTypeAdapter());
   Hive.registerAdapter(PendingOperationAdapter());
-  Hive.registerAdapter(OperationTypeAdapter());
   Hive.registerAdapter(LocationDataAdapter());
   Hive.registerAdapter(LocationExperimentAdapter());
   
@@ -38,13 +41,8 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   
-  // Initialize auth service and sign in anonymously for testing
-  final authService = Get.put(AuthService());
-  try {
-    await authService.signInAnonymously();
-  } catch (e) {
-    debugPrint('Auto sign-in failed: $e');
-  }
+  // Initialize auth service (no auto sign-in anymore)
+  Get.put(AuthService());
   
   // Initialize preferences service
   final prefsService = Get.put(PreferencesService());
@@ -69,7 +67,14 @@ class StreamlineApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
       initialBinding: InventoryBinding(),
-      home: const HomeScreen(),
+      initialRoute: '/splash',
+      getPages: [
+        GetPage(name: '/splash', page: () => const SplashScreen()),
+        GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/register', page: () => const RegisterScreen()),
+        GetPage(name: '/home', page: () => const HomeScreen()),
+        GetPage(name: '/profile', page: () => const ProfileScreen()),
+      ],
     );
   }
 }

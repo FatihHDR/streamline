@@ -17,7 +17,6 @@ class DashboardAnimatedContainer extends StatefulWidget {
 
 class _DashboardAnimatedContainerState
     extends State<DashboardAnimatedContainer> {
-  bool _isExpanded = false;
   late final InventoryController _inventoryController;
 
   @override
@@ -29,173 +28,252 @@ class _DashboardAnimatedContainerState
   @override
   Widget build(BuildContext context) {
     final bottomInset =
-        MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight;
+        MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 32;
 
     return RefreshIndicator(
       onRefresh: () async {
         await _inventoryController.refreshAll();
-        setState(() {
-          _isExpanded = !_isExpanded;
-        });
       },
+      color: AppTheme.primaryColor,
       child: Obx(
         () {
-            final items = _inventoryController.items;
+          final items = _inventoryController.items;
           final totalItems = items.length;
           final totalQuantity =
               items.fold(0, (sum, item) => sum + item.quantity);
-            final List<StockItem> lowStockList =
+          final List<StockItem> lowStockList =
               _inventoryController.lowStockItems;
           final lowStockItems = lowStockList.length;
           final outOfStockItems = _inventoryController.outOfStockCount;
 
           return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        // Add extra buffer to ensure content doesn't overflow under the bottom nav
-        padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset + 48),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header dengan animasi
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut,
-              padding: EdgeInsets.all(_isExpanded ? 20 : 16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppTheme.primaryColor, AppTheme.primaryVariant],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(_isExpanded ? 20 : 12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.3),
-                    blurRadius: _isExpanded ? 20 : 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 500),
-                        padding: EdgeInsets.all(_isExpanded ? 12 : 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(
-                            _isExpanded ? 12 : 8,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/logo.png',
-                            width: _isExpanded ? 32 : 24,
-                            height: _isExpanded ? 32 : 24,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Dashboard Gudang',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: _isExpanded ? 24 : 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Mode: AnimatedContainer',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Expand button removed per design — header expansion controlled by pull-to-refresh only
-                    ],
-                  ),
-                  if (_isExpanded) ...[
-                    const SizedBox(height: 16),
-                    AnimatedOpacity(
-                      opacity: _isExpanded ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 500),
-                      child: Text(
-                        'Kelola stok barang gudang Anda dengan mudah dan efisien',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                        ),
-                      ),
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Welcome Card
+                _buildWelcomeCard(),
+                const SizedBox(height: 20),
+
+                // Quick Stats Section
+                _buildSectionTitle('Ringkasan', Icons.analytics_outlined),
+                const SizedBox(height: 12),
+                
+                // Statistik Cards
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.5,
+                  children: [
+                    StatCardAnimated(
+                      title: 'Total Item',
+                      value: totalItems.toString(),
+                      icon: Icons.inventory_2_rounded,
+                      color: AppTheme.infoColor,
+                      trend: '+5%',
+                    ),
+                    StatCardAnimated(
+                      title: 'Kuantitas',
+                      value: _formatNumber(totalQuantity),
+                      icon: Icons.all_inbox_rounded,
+                      color: AppTheme.successColor,
+                      trend: '+12%',
+                    ),
+                    StatCardAnimated(
+                      title: 'Stok Menipis',
+                      value: lowStockItems.toString(),
+                      icon: Icons.warning_amber_rounded,
+                      color: AppTheme.warningColor,
+                      trend: lowStockItems > 0 ? '!' : '✓',
+                    ),
+                    StatCardAnimated(
+                      title: 'Stok Habis',
+                      value: outOfStockItems.toString(),
+                      icon: Icons.error_outline_rounded,
+                      color: AppTheme.dangerColor,
+                      trend: outOfStockItems > 0 ? '!!' : '✓',
                     ),
                   ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+                ),
+                const SizedBox(height: 24),
 
-            // Statistik Cards dengan AnimatedContainer
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.4,
-              children: [
-                StatCardAnimated(
-                  title: 'Total Item',
-                  value: totalItems.toString(),
-                  icon: Icons.inventory_2,
-                  color: AppTheme.infoColor,
-                  trend: '+5%',
-                ),
-                StatCardAnimated(
-                  title: 'Total Kuantitas',
-                  value: totalQuantity.toString(),
-                  icon: Icons.all_inbox,
-                  color: AppTheme.successColor,
-                  trend: '+12%',
-                ),
-                StatCardAnimated(
-                  title: 'Stok Menipis',
-                  value: lowStockItems.toString(),
-                  icon: Icons.warning_amber,
-                  color: AppTheme.warningColor,
-                  trend: '-3%',
-                ),
-                StatCardAnimated(
-                  title: 'Stok Habis',
-                  value: outOfStockItems.toString(),
-                  icon: Icons.error_outline,
-                  color: AppTheme.dangerColor,
-                  trend: '0%',
-                ),
+                // Chart Section
+                _buildSectionTitle('Grafik Stok', Icons.bar_chart_rounded),
+                const SizedBox(height: 12),
+                const StockChartAnimated(),
+                const SizedBox(height: 24),
+
+                // Low Stock Alerts
+                if (lowStockList.isNotEmpty) ...[
+                  _buildSectionTitle('Peringatan Stok', Icons.notification_important_rounded),
+                  const SizedBox(height: 12),
+                  LowStockAlertAnimated(lowStockItems: lowStockList),
+                ],
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Chart Section
-            const StockChartAnimated(),
-            const SizedBox(height: 24),
-
-            // Low Stock Alerts
-            LowStockAlertAnimated(lowStockItems: lowStockList),
-          ],
-        ),
           );
         },
       ),
     );
+  }
+
+  Widget _buildWelcomeCard() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    IconData greetingIcon;
+    
+    if (hour < 12) {
+      greeting = 'Selamat Pagi';
+      greetingIcon = Icons.wb_sunny_rounded;
+    } else if (hour < 17) {
+      greeting = 'Selamat Siang';
+      greetingIcon = Icons.light_mode_rounded;
+    } else {
+      greeting = 'Selamat Malam';
+      greetingIcon = Icons.nightlight_round;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(greetingIcon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      greeting,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Dashboard Inventaris',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.tips_and_updates_rounded, color: Colors.white70, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Mode animasi: AnimatedContainer - Kelola stok dengan mudah',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.15),
+                AppTheme.accentColor.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.primaryColor.withOpacity(0.15),
+              width: 1,
+            ),
+          ),
+          child: Icon(icon, size: 18, color: AppTheme.primaryColor),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          height: 1,
+          width: 40,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.3),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatNumber(int number) {
+    if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}M';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}K';
+    }
+    return number.toString();
   }
 }
