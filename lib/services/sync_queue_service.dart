@@ -2,8 +2,6 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/pending_operation.dart';
-import '../models/stock_item.dart';
-import '../models/stock_transaction.dart';
 
 /// Service for managing pending sync operations (offline queue)
 class SyncQueueService {

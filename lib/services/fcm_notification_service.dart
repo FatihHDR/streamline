@@ -31,9 +31,6 @@ class FCMNotificationService extends GetxService {
   
   // Track notification receipt time for latency analysis
   final lastNotificationTime = Rx<DateTime?>(null);
-  
-  // Store notification data when app is terminated
-  static const String _storageKey = 'pending_notifications';
 
   /// Initialize the notification service
   Future<FCMNotificationService> init() async {
@@ -122,12 +119,13 @@ class FCMNotificationService extends GetxService {
   /// Create Android notification channel
   Future<void> _createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'streamline_warehouse_channel_v2', // id
-      'Warehouse Notifications V2', // name
+      'streamline_warehouse_channel_v4', // id
+      'Warehouse Notifications V4', // name
       description: 'Notifications for warehouse inventory management',
       importance: Importance.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('notification_sound'),
+      sound: UriAndroidNotificationSound('android.resource://com.example.streamline/raw/notification_sound'),
+      audioAttributesUsage: AudioAttributesUsage.notification,
       enableVibration: true,
       // showBadge parameter is removed in newer versions or controlled via channel
     );
@@ -194,19 +192,19 @@ class FCMNotificationService extends GetxService {
   /// Show local notification (for foreground state)
   Future<void> _showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
-    final android = message.notification?.android;
 
     if (notification != null) {
       // Prepare notification details with custom sound
       const AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-        'streamline_warehouse_channel_v2',
-        'Warehouse Notifications V2',
+        'streamline_warehouse_channel_v4',
+        'Warehouse Notifications V4',
         channelDescription: 'Notifications for warehouse inventory management',
         importance: Importance.high,
         priority: Priority.high,
         playSound: true,
-        sound: RawResourceAndroidNotificationSound('notification_sound'),
+        sound: UriAndroidNotificationSound('android.resource://com.example.streamline/raw/notification_sound'),
+        audioAttributesUsage: AudioAttributesUsage.notification,
         enableVibration: true,
         ticker: 'ticker',
         showWhen: true,
@@ -281,7 +279,6 @@ class FCMNotificationService extends GetxService {
     logger.i('🧭 Navigating based on payload: $data');
     
     final String? type = data['type'];
-    final String? screen = data['screen'];
     
     // Navigate based on notification type
     switch (type) {
@@ -335,13 +332,14 @@ class FCMNotificationService extends GetxService {
 
     // Prepare notification details
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'streamline_warehouse_channel_v2',
-      'Warehouse Notifications V2',
+      'streamline_warehouse_channel_v4',
+      'Warehouse Notifications V4',
       channelDescription: 'Notifications for warehouse inventory management',
       importance: Importance.high, 
       priority: Priority.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('notification_sound'),
+      sound: UriAndroidNotificationSound('android.resource://com.example.streamline/raw/notification_sound'),
+      audioAttributesUsage: AudioAttributesUsage.notification,
       enableVibration: true,
       // showBadge parameter is removed in newer versions or controlled via channel
     );

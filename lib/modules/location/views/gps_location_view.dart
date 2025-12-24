@@ -3,7 +3,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../controllers/location_controller.dart';
-import '../models/location_data.dart';
 import '../../../utils/app_theme.dart';
 
 /// View untuk GPS Location dengan mode high accuracy

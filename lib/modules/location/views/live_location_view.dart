@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import '../controllers/location_controller.dart';
 import '../models/location_data.dart';
-import '../../../utils/app_theme.dart';
 
 /// View untuk Live Location (Real-Time Tracking) dengan path visualization
 class LiveLocationView extends GetView<LocationController> {
