@@ -78,7 +78,12 @@ class ProfileController extends GetxController {
 
       userProfile.value = UserProfile.fromJson(response);
       
-      Get.snackbar('Success', 'Profile updated successfully');
+      Get.snackbar(
+        'Berhasil', 
+        'Profile berhasil diupdate',
+        backgroundColor: Get.theme.colorScheme.primaryContainer,
+        colorText: Get.theme.colorScheme.onPrimaryContainer,
+      );
     } catch (e) {
       Get.log('Error updating profile: $e', isError: true);
       Get.snackbar('Error', 'Failed to update profile: $e');
