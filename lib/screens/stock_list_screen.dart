@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/app_theme.dart';
 import '../models/stock_item.dart';
+import '../models/stock_transaction.dart';
 import '../modules/inventory/controllers/inventory_controller.dart';
 import '../widgets/animation_mode_selector.dart';
 import 'edit_item_modal.dart';
@@ -722,6 +723,50 @@ class _StockListScreenState extends State<StockListScreen>
                       ),
                     ],
                     const SizedBox(height: 24),
+                    // Stock Adjustment Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showAdjustmentDialog(context, item, TransactionType.incoming);
+                            },
+                            icon: const Icon(Icons.add_circle_outline),
+                            label: const Text('Stok Masuk'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.successColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _showAdjustmentDialog(context, item, TransactionType.outgoing);
+                            },
+                            icon: const Icon(Icons.remove_circle_outline),
+                            label: const Text('Stok Keluar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.warningColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    // Edit and Delete Buttons
                     Row(
                       children: [
                         Expanded(
@@ -752,12 +797,17 @@ class _StockListScreenState extends State<StockListScreen>
                             label: const Text('Edit'),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: AppTheme.textSecondary),
+                              foregroundColor: AppTheme.textPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton.icon(
+                          child: OutlinedButton.icon(
                             onPressed: () async {
                               Navigator.pop(context);
                               final confirmed = await showDialog<bool>(
@@ -809,12 +859,15 @@ class _StockListScreenState extends State<StockListScreen>
                                 }
                               }
                             },
-                            icon: const Icon(Icons.delete),
+                            icon: const Icon(Icons.delete_outline),
                             label: const Text('Hapus'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
+                            style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: BorderSide(color: Colors.red.shade300),
+                              foregroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
@@ -826,6 +879,124 @@ class _StockListScreenState extends State<StockListScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAdjustmentDialog(
+    BuildContext context,
+    StockItem item,
+    TransactionType type,
+  ) {
+    final quantityController = TextEditingController();
+    final noteController = TextEditingController();
+    final isIncoming = type == TransactionType.incoming;
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isIncoming ? 'Stok Masuk' : 'Stok Keluar'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Update stok untuk "${item.name}"',
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: quantityController,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Jumlah (${item.unit})',
+                  prefixIcon: const Icon(Icons.numbers),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Masukkan jumlah';
+                  }
+                  final qty = int.tryParse(value);
+                  if (qty == null || qty <= 0) {
+                    return 'Jumlah harus > 0';
+                  }
+                  if (!isIncoming && qty > item.quantity) {
+                    return 'Stok tidak mencukupi (Max: ${item.quantity})';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: noteController,
+                decoration: InputDecoration(
+                  labelText: 'Catatan (Opsional)',
+                  prefixIcon: const Icon(Icons.note_alt_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final qty = int.parse(quantityController.text);
+                final note = noteController.text.trim();
+                
+                Navigator.pop(context); // Close dialog
+
+                try {
+                  await _inventoryController.adjustStock(
+                    itemId: item.id,
+                    quantityChange: qty,
+                    type: type,
+                    note: note.isNotEmpty ? note : null,
+                  );
+                  
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Berhasil ${isIncoming ? "menambah" : "mengurangi"} stok',
+                        ),
+                        backgroundColor: AppTheme.successColor,
+                      ),
+                    );
+                    _inventoryController.loadStockItems(force: true); // Refresh list
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal update stok: $e'),
+                        backgroundColor: AppTheme.dangerColor,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isIncoming ? AppTheme.successColor : AppTheme.warningColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Simpan'),
+          ),
+        ],
       ),
     );
   }

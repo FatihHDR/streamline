@@ -143,6 +143,52 @@ class InventoryController extends GetxController {
     }
   }
 
+  /// Adjust stock quantity and record transaction
+  Future<void> adjustStock({
+    required String itemId,
+    required int quantityChange,
+    required TransactionType type,
+    String? note,
+  }) async {
+    try {
+      final item = getItemById(itemId);
+      if (item == null) throw Exception('Item not found');
+
+      // 1. Calculate new quantity
+      final newQuantity = item.quantity + (type == TransactionType.incoming ? quantityChange : -quantityChange);
+      
+      if (newQuantity < 0) {
+        throw Exception('Stok tidak mencukupi for outgoing transaction');
+      }
+
+      // 2. Update Stock Item
+      final updatedItem = item.copyWith(
+        quantity: newQuantity,
+        lastUpdated: DateTime.now(),
+      );
+      await updateStockItem(itemId, updatedItem);
+
+      // 3. Create Transaction Record
+      final transaction = StockTransaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID, will be replaced by backend or UUID
+        itemId: itemId,
+        itemName: item.name,
+        type: type,
+        quantity: quantityChange,
+        date: DateTime.now(),
+        note: note,
+        performedBy: 'User', // TODO: Get actual user name
+      );
+
+      await createTransaction(transaction);
+      
+      Get.log('Stock adjusted successfully for ${item.name}');
+    } catch (e) {
+      Get.log('Failed to adjust stock: $e', isError: true);
+      rethrow;
+    }
+  }
+
   /// Delete a stock item
   Future<void> deleteStockItem(String id) async {
     try {
