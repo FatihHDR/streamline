@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -7,11 +8,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
+import 'utils/navigation_bar_controller.dart';
 import 'models/stock_item.dart';
 import 'models/stock_transaction.dart';
 import 'models/pending_operation.dart';
 import 'models/notification_item.dart';
 import 'modules/location/models/location_data.dart';
+import 'modules/location/models/warehouse_model.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -32,6 +35,12 @@ void main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     debugPrint('🚀 [MAIN] Starting app initialization...');
+    
+    // Hide navigation bar at startup with animation
+    debugPrint('📱 [MAIN] Hiding navigation bar with animation...');
+    await NavigationBarAnimationController.hideNavigationBar(
+      animationDuration: const Duration(milliseconds: 400),
+    );
     
     try {
       // Load environment variables
@@ -62,6 +71,7 @@ void main() async {
       Hive.registerAdapter(LocationDataAdapter());
       Hive.registerAdapter(LocationExperimentAdapter());
       Hive.registerAdapter(NotificationItemAdapter());
+      Hive.registerAdapter(WarehouseAdapter());
       
       // Initialize Supabase
       debugPrint('⚡ [MAIN] Initializing Supabase...');
