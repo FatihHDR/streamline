@@ -143,6 +143,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
@@ -151,29 +153,227 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Premium App Bar
-            _buildPremiumAppBar(),
-            // Content
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: Padding(
-                  key: ValueKey(_selectedIndex),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _getSelectedScreen(),
+        bottom: !isLandscape, // Remove bottom safe area in landscape
+        child: isLandscape ? _buildLandscapeLayout() : _buildPortraitLayout(),
+      ),
+      bottomNavigationBar: !isLandscape ? _buildPremiumBottomNav() : null,
+      extendBody: !isLandscape,
+    );
+  }
+
+  /// Portrait layout
+  Widget _buildPortraitLayout() {
+    return Column(
+      children: [
+        // Premium App Bar
+        _buildPremiumAppBar(),
+        // Content
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: Padding(
+              key: ValueKey(_selectedIndex),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: _getSelectedScreen(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Landscape layout
+  Widget _buildLandscapeLayout() {
+    return Row(
+      children: [
+        // Compact side navigation
+        Container(
+          width: 80,
+          color: AppTheme.cardColor,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildLandscapeNavItem(0, Icons.home, 'Dashboard'),
+                    _buildLandscapeNavItem(1, Icons.inventory_2, 'Stock'),
+                    _buildLandscapeNavItem(2, Icons.history, 'History'),
+                    _buildLandscapeNavItem(3, Icons.location_on, 'Location'),
+                  ],
                 ),
               ),
+              // Profile button at bottom
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Material(
+                  color: AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(10),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Get.toNamed('/profile');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      child: const Icon(
+                        Icons.account_circle,
+                        size: 20,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Main content
+        Expanded(
+          child: Column(
+            children: [
+              // Compact app bar for landscape
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Logo
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.accentGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: 28,
+                            height: 28,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Title
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Streamline',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            _getScreenTitle(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Sync indicator
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const SyncStatusIndicator(),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: Padding(
+                    key: ValueKey(_selectedIndex),
+                    padding: const EdgeInsets.all(16),
+                    child: _getSelectedScreen(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build landscape navigation item
+  Widget _buildLandscapeNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() => _selectedIndex = index);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
+            margin: const EdgeInsets.all(4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 24,
+                  color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 8,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      bottomNavigationBar: _buildPremiumBottomNav(),
-      extendBody: true,
     );
   }
 
