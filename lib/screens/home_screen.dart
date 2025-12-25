@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -422,36 +423,53 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildPremiumBottomNav() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
       decoration: BoxDecoration(
-        color: AppTheme.cardColor,
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            blurRadius: 24,
-            offset: const Offset(0, 4),
+            color: AppTheme.primaryColor.withOpacity(0.15),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+            spreadRadius: 0,
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Home'),
-            Obx(() => _buildNavItemWithBadge(
-              1, 
-              Icons.inventory_2_outlined, 
-              Icons.inventory_2_rounded, 
-              'Stok',
-              _inventoryController.lowStockItems.length,
-            )),
-            _buildFAB(),
-            _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Riwayat'),
-            _buildNavItem(3, Icons.location_on_outlined, Icons.location_on_rounded, 'Lokasi'),
-          ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.5),
+                width: 1.5,
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              bottom: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildNavItem(0, Icons.grid_view_outlined, Icons.grid_view_rounded, 'Home'),
+                  Obx(() => _buildNavItemWithBadge(
+                    1, 
+                    Icons.inventory_2_outlined, 
+                    Icons.inventory_2_rounded, 
+                    'Stok',
+                    _inventoryController.lowStockItems.length,
+                  )),
+                  _buildFAB(),
+                  _buildNavItem(2, Icons.receipt_long_outlined, Icons.receipt_long_rounded, 'Riwayat'),
+                  _buildNavItem(3, Icons.location_on_outlined, Icons.location_on_rounded, 'Lokasi'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -468,28 +486,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(30), // Pill shape for active item
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isSelected ? activeIcon : icon,
-                size: 22,
-                color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(scale: animation, child: child);
+                },
+                child: Icon(
+                  isSelected ? activeIcon : icon,
+                  key: ValueKey(isSelected),
+                  size: 24,
                   color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
                 ),
               ),
+              const SizedBox(height: 2),
+              if (isSelected) // Only show label when selected for cleaner look? Or allow user choice. Keeping label for now but smaller.
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                  ),
+                ),
             ],
           ),
         ),
@@ -508,31 +535,41 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(30),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Stack(
                 clipBehavior: Clip.none,
+                alignment: Alignment.center,
                 children: [
-                  Icon(
-                    isSelected ? activeIcon : icon,
-                    size: 22,
-                    color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                   AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    transitionBuilder: (child, animation) {
+                      return ScaleTransition(scale: animation, child: child);
+                    },
+                    child: Icon(
+                      isSelected ? activeIcon : icon,
+                      key: ValueKey(isSelected),
+                      size: 24,
+                      color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                    ),
                   ),
                   if (badgeCount > 0)
                     Positioned(
                       right: -8,
                       top: -4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppTheme.dangerColor,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
                         constraints: const BoxConstraints(minWidth: 16),
                         child: Text(
@@ -540,23 +577,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+              const SizedBox(height: 2),
+              if (isSelected)
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? AppTheme.primaryColor : AppTheme.textMuted,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
