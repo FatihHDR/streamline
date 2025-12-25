@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../services/warehouse_service.dart';
 import '../../../utils/app_theme.dart';
 import 'gps_warehouse_view.dart';
+import '../../../widgets/stat_card_animated.dart';
 
 /// Dashboard utama untuk Warehouse Management
 class LocationDashboardView extends StatelessWidget {
@@ -13,103 +14,107 @@ class LocationDashboardView extends StatelessWidget {
     final warehouseService = Get.find<WarehouseService>();
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Warehouse Management'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 2,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Card - Warehouse Overview
-            _buildHeaderCard(warehouseService),
-
-            const SizedBox(height: 20),
-
-            // Warehouse Statistics Grid
-            _buildWarehouseStatsGrid(warehouseService),
-
-            const SizedBox(height: 20),
-
-            // GPS Locator Feature
-            _buildGpsLocatorCard(context),
-
-            const SizedBox(height: 20),
-
-            // Warehouses List
-            _buildWarehousesListSection(warehouseService),
-          ],
-        ),
+      backgroundColor: AppTheme.backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: false,
+            pinned: false,
+            snap: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            expandedHeight: 0,
+            toolbarHeight: 0,
+          ),
+          
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildPremiumHeader(),
+                const SizedBox(height: 20),
+                _buildWarehouseStatsGrid(warehouseService),
+                const SizedBox(height: 20),
+                _buildGpsLocatorCard(context),
+                const SizedBox(height: 24),
+                _buildWarehousesListSection(warehouseService),
+                const SizedBox(height: 80),
+              ]),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeaderCard(WarehouseService warehouseService) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.7)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  Widget _buildPremiumHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryColor.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.warehouse,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Streamline Warehouse',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Text(
-                        'Management System',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: const Icon(
+                  Icons.warehouse_outlined,
+                  color: Colors.white,
+                  size: 28,
                 ),
-              ],
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Warehouse',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Management System',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Kelola dan pantau semua gudang dengan informasi real-time',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 13,
+              height: 1.4,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Kelola dan pantau semua gudang dengan informasi real-time tentang kapasitas, lokasi, dan status inventory.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -121,61 +126,49 @@ class LocationDashboardView extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Ringkasan Gudang',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.2,
+            childAspectRatio: 1.5,
             children: [
-              _buildStatTile(
+              StatCardAnimated(
                 title: 'Total Gudang',
                 value: '${stats['totalWarehouses']}',
-                icon: Icons.warehouse,
-                color: Colors.blue,
+                icon: Icons.warehouse_rounded,
+                color: const Color(0xFF6366F1),
+                trend: '+${stats['totalWarehouses']}',
               ),
-              _buildStatTile(
-                title: 'Kapasitas Total',
+              StatCardAnimated(
+                title: 'Kapasitas',
                 value: '${stats['totalCapacity']}',
-                subtitle: 'slots',
-                icon: Icons.inventory_2,
-                color: Colors.green,
+                icon: Icons.inventory_2_rounded,
+                color: const Color(0xFF10B981),
               ),
-              _buildStatTile(
+              StatCardAnimated(
                 title: 'Terisi',
                 value: '${stats['totalOccupied']}',
-                subtitle: 'slots',
-                icon: Icons.check_circle,
-                color: Colors.orange,
+                icon: Icons.check_circle_rounded,
+                color: const Color(0xFFF59E0B),
               ),
-              _buildStatTile(
-                title: 'Kosong',
-                value: '${stats['availableSlots']}',
-                subtitle: 'slots',
-                icon: Icons.check_box_outline_blank,
-                color: Colors.purple,
-              ),
-              _buildStatTile(
-                title: 'Total Area',
-                value: '${stats['totalArea'].toStringAsFixed(0)}',
-                subtitle: 'm²',
-                icon: Icons.aspect_ratio,
-                color: Colors.teal,
-              ),
-              _buildStatTile(
+              StatCardAnimated(
                 title: 'Utilisasi',
-                value: '${(stats['occupancyPercentage'] as double).toStringAsFixed(1)}%',
-                icon: Icons.pie_chart,
-                color: Colors.redAccent,
+                value: '${(stats['occupancyPercentage'] as double).toStringAsFixed(0)}%',
+                icon: Icons.pie_chart_rounded,
+                color: const Color(0xFFEF4444),
+                trend: '${(stats['occupancyPercentage'] as double).toStringAsFixed(0)}%',
               ),
             ],
           ),
@@ -184,81 +177,45 @@ class LocationDashboardView extends StatelessWidget {
     });
   }
 
-  Widget _buildStatTile({
-    required String title,
-    required String value,
-    String? subtitle,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 2,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            if (subtitle != null)
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildGpsLocatorCard(BuildContext context) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade400, Colors.blue.shade600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF3B82F6),
+            Color(0xFF2563EB),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3B82F6).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
           onTap: () => Get.to(() => const GpsWarehouseView()),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(
-                    Icons.location_on,
+                    Icons.location_on_rounded,
                     color: Colors.white,
-                    size: 32,
+                    size: 28,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -270,43 +227,51 @@ class LocationDashboardView extends StatelessWidget {
                         'GPS Warehouse Locator',
                         style: TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Lihat lokasi gudang pada peta interaktif',
+                        'Lihat lokasi gudang pada peta',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.white70,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 10,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
                           'Network Local GPS',
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.white,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white70,
-                  size: 16,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ],
             ),
@@ -320,52 +285,105 @@ class LocationDashboardView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Daftar Gudang',
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
+            color: AppTheme.textPrimary,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         Obx(() {
           final warehouses = warehouseService.warehouses;
           
           if (warehouses.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text('Tidak ada gudang yang tersedia'),
+            return Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.warehouse_outlined,
+                        size: 48,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Belum ada gudang',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Gudang akan muncul di sini',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
-          return ListView.builder(
+          return ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: warehouses.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final warehouse = warehouses[index];
               
-              return Card(
-                elevation: 1,
-                margin: const EdgeInsets.only(bottom: 12),
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade100,
-                              borderRadius: BorderRadius.circular(8),
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFF6366F1).withOpacity(0.1),
+                                  const Color(0xFF6366F1).withOpacity(0.05),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
-                              Icons.warehouse,
-                              color: Colors.blue,
+                              Icons.warehouse_rounded,
+                              color: Color(0xFF6366F1),
                               size: 24,
                             ),
                           ),
@@ -378,15 +396,21 @@ class LocationDashboardView extends StatelessWidget {
                                   warehouse.name,
                                   style: const TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.textPrimary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
                                   '${warehouse.city}, ${warehouse.province}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey.shade600,
+                                    color: AppTheme.textSecondary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -394,67 +418,80 @@ class LocationDashboardView extends StatelessWidget {
                           if (warehouse.isNearCapacity)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
+                                horizontal: 10,
+                                vertical: 5,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade100,
-                                borderRadius: BorderRadius.circular(4),
+                                color: const Color(0xFFEF4444).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 'Penuh',
                                 style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                  color: Color(0xFFEF4444),
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      // Info Row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildInfoItem(
-                              'Ukuran',
-                              '${warehouse.sizeInSquareMeter.toStringAsFixed(0)} m²',
-                              Icons.aspect_ratio,
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildCompactInfoItem(
+                                'Area',
+                                '${warehouse.sizeInSquareMeter.toStringAsFixed(0)} m²',
+                                Icons.aspect_ratio_rounded,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildInfoItem(
-                              'Terisi',
-                              '${warehouse.occupiedSlots}/${warehouse.totalSlots}',
-                              Icons.inventory_2,
+                            Container(
+                              width: 1,
+                              height: 32,
+                              color: Colors.grey.shade200,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildInfoItem(
-                              'Utilisasi',
-                              '${warehouse.occupancyPercentage.toStringAsFixed(0)}%',
-                              Icons.pie_chart,
+                            Expanded(
+                              child: _buildCompactInfoItem(
+                                'Terisi',
+                                '${warehouse.occupiedSlots}/${warehouse.totalSlots}',
+                                Icons.inventory_2_rounded,
+                              ),
                             ),
-                          ),
-                        ],
+                            Container(
+                              width: 1,
+                              height: 32,
+                              color: Colors.grey.shade200,
+                            ),
+                            Expanded(
+                              child: _buildCompactInfoItem(
+                                'Utilisasi',
+                                '${warehouse.occupancyPercentage.toStringAsFixed(0)}%',
+                                Icons.pie_chart_rounded,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      // Progress Bar
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: warehouse.occupancyPercentage / 100,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey.shade300,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.shade100,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             warehouse.occupancyPercentage >= 80
-                                ? Colors.red
+                                ? const Color(0xFFEF4444)
                                 : warehouse.occupancyPercentage >= 50
-                                    ? Colors.orange
-                                    : Colors.green,
+                                    ? const Color(0xFFF59E0B)
+                                    : const Color(0xFF10B981),
                           ),
                         ),
                       ),
@@ -469,31 +506,36 @@ class LocationDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Row(
+  Widget _buildCompactInfoItem(String label, String value, IconData icon) {
+    return Column(
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+        Icon(
+          icon,
+          size: 18,
+          color: AppTheme.primaryColor,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.textPrimary,
           ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppTheme.textMuted,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
