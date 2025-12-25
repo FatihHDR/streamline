@@ -69,9 +69,16 @@ void main() async {
         anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
       );
       
-      // Initialize auth service (no auto sign-in anymore)
+      // Initialize auth service (temporary: auto sign-in anonymously for verification)
       debugPrint('🔐 [MAIN] Initializing AuthService...');
-      Get.put(AuthService());
+      final authService = Get.put(AuthService());
+      // Temporary: sign in anonymously to validate Supabase queries that rely on auth
+      try {
+        await authService.signInAnonymously();
+        debugPrint('⚡ [MAIN] Anonymous sign-in OK: ${authService.currentUser.value?.id}');
+      } catch (e) {
+        debugPrint('⚠️ [MAIN] Anonymous sign-in failed: $e');
+      }
       
       // Initialize preferences service
       debugPrint('⚙️ [MAIN] Initializing PreferencesService...');

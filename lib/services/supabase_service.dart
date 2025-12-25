@@ -14,11 +14,16 @@ class SupabaseService {
           .from('inventory_items')
           .select()
           .order('created_at', ascending: false);
+      // Debug: log raw response
+      // ignore: avoid_print
+      print('DEBUG getStockItems response: $response');
 
       return (response as List)
           .map((json) => StockItem.fromJson(json))
           .toList();
     } catch (e) {
+      // ignore: avoid_print
+      print('DEBUG getStockItems error: $e');
       throw Exception('Failed to fetch stock items: $e');
     }
   }

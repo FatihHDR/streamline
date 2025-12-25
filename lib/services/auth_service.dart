@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService extends GetxController {
   final SupabaseClient _client = Supabase.instance.client;
@@ -16,7 +13,8 @@ class AuthService extends GetxController {
     super.onInit();
     currentUser.value = _client.auth.currentUser;
     
-    // Using Supabase hosted OAuth flow instead of native GoogleSignIn
+    // Initialize GoogleSignIn (optional, only if you need signOut)
+    _googleSignIn = GoogleSignIn();
     
     // Listen to auth state changes
     _client.auth.onAuthStateChange.listen((data) {
@@ -81,25 +79,21 @@ class AuthService extends GetxController {
   /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
-      // Use Supabase hosted OAuth flow. This will open the browser
-      // and redirect to the Supabase callback URL after sign-in.
-      final res = await _client.auth.signInWithOAuth(
-        Provider.google,
-        options: AuthOptions(
-          // Your Supabase callback URL
-          redirectTo: 'https://cfmdytkgeedbuddexiwt.supabase.co/auth/v1/callback',
-        ),
+      // Use Supabase hosted OAuth flow
+      await _client.auth.signInWithOAuth(
+        OAuthProvider.google,  // ✅ Perbaikan: OAuthProvider bukan Provider
+        redirectTo: 'com.example.streamline://login-callback',  // ✅ Perbaikan: redirectTo langsung sebagai parameter
       );
 
       // If a session is returned immediately (web), update the user.
-      currentUser.value = res.session?.user;
+      currentUser.value = _client.auth.currentSession?.user;
       Get.log('Triggered Supabase hosted Google OAuth');
     } catch (e) {
       Get.log('Failed to trigger Supabase hosted Google OAuth: $e', isError: true);
       rethrow;
     }
   }
-
+  
   /// Sign out
   Future<void> signOut() async {
     try {
