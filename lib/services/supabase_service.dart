@@ -10,6 +10,11 @@ class SupabaseService {
   /// Fetch all inventory items for the authenticated user
   Future<List<StockItem>> getStockItems() async {
     try {
+      // Debug: Check auth status
+      final user = _client.auth.currentUser;
+      print('DEBUG getStockItems - Auth User: ${user?.id ?? "NO USER"}');
+      print('DEBUG getStockItems - Is Anonymous: ${user?.isAnonymous ?? true}');
+      
       final response = await _client
           .from('inventory_items')
           .select()
@@ -17,6 +22,7 @@ class SupabaseService {
       // Debug: log raw response
       // ignore: avoid_print
       print('DEBUG getStockItems response: $response');
+      print('DEBUG getStockItems count: ${(response as List).length}');
 
       return (response as List)
           .map((json) => StockItem.fromJson(json))

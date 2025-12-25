@@ -200,7 +200,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildListTile(
                     icon: Icons.badge,
                     title: 'User ID',
-                    subtitle: (user?.id ?? 'Unknown').substring(0, 8) + '...',
+                    subtitle: () {
+                      final userId = user?.id ?? 'Unknown';
+                      return userId.length > 8 ? '${userId.substring(0, 8)}...' : userId;
+                    }(),
                     onTap: () {
                       Get.snackbar(
                         'User ID',
@@ -449,6 +452,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       );
+                    },
+                  ),
+                  _buildListTile(
+                    icon: Icons.bug_report,
+                    title: 'Debug Supabase Sync',
+                    subtitle: 'Diagnose sync issues',
+                    onTap: () {
+                      Get.toNamed('/debug-sync');
                     },
                   ),
                 ],

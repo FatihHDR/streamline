@@ -22,6 +22,7 @@ import 'modules/inventory/bindings/inventory_binding.dart';
 import 'modules/notification/bindings/notification_binding.dart';
 import 'modules/notification/views/notification_list_screen.dart';
 import 'modules/notification/views/notification_detail_screen.dart';
+import 'screens/debug_sync_screen.dart';
 import 'services/auth_service.dart';
 import 'services/preferences_service.dart';
 import 'services/sync_queue_service.dart';
@@ -200,6 +201,10 @@ class StreamlineApp extends StatelessWidget {
             final notification = args['notification'] as NotificationItem;
             return NotificationDetailScreen(notification: notification);
           },
+        ),
+        GetPage(
+          name: '/debug-sync',
+          page: () => const DebugSyncScreen(),
         ),
       ],
     );

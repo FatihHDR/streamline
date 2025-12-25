@@ -31,19 +31,25 @@ class OfflineFirstDataProvider implements IDataProvider {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   final _isSyncing = false.obs;
   final _isOnline = true.obs;
+  final _pendingCount = 0.obs;
 
   bool get isSyncing => _isSyncing.value;
   bool get isOnline => _isOnline.value;
-  int get pendingCount => _syncQueueService.getPendingCount();
+  int get pendingCount => _pendingCount.value;
+  
+  /// Update pending count (call this after queue operations)
+  void _updatePendingCount() {
+    _pendingCount.value = _syncQueueService.getPendingCount();
+  }
 
   /// Initialize connectivity listener
   void _initConnectivityListener() {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((results) {
       final wasOffline = !_isOnline.value;
-      _isOnline.value = !results.contains(ConnectivityResult.none);
-      
+      _isOnline.value = !results.contains(ConnectivityResult.none) && results.isNotEmpty;
+
       Get.log('Connectivity changed: ${_isOnline.value ? "ONLINE" : "OFFLINE"}');
-      
+
       // Auto-sync when coming back online
       if (wasOffline && _isOnline.value) {
         Get.log('Back online! Starting auto-sync...');
@@ -53,7 +59,7 @@ class OfflineFirstDataProvider implements IDataProvider {
 
     // Check initial connectivity
     _connectivity.checkConnectivity().then((results) {
-      _isOnline.value = !results.contains(ConnectivityResult.none);
+      _isOnline.value = !results.contains(ConnectivityResult.none) && results.isNotEmpty;
       Get.log('Initial connectivity: ${_isOnline.value ? "ONLINE" : "OFFLINE"}');
     });
   }
@@ -99,6 +105,7 @@ class OfflineFirstDataProvider implements IDataProvider {
       entityId: localItem.id,
       data: localItem.toJson(),
     );
+    _updatePendingCount();
     Get.log('⏳ Queued for sync (${pendingCount} pending)');
 
     // Try to sync immediately if online
@@ -123,6 +130,7 @@ class OfflineFirstDataProvider implements IDataProvider {
       entityId: id,
       data: item.toJson(),
     );
+    _updatePendingCount();
     Get.log('⏳ Queued for sync (${pendingCount} pending)');
 
     // Try to sync immediately if online
@@ -146,6 +154,7 @@ class OfflineFirstDataProvider implements IDataProvider {
       entityType: 'stock_item',
       entityId: id,
     );
+    _updatePendingCount();
     Get.log('⏳ Queued for sync (${pendingCount} pending)');
 
     // Try to sync immediately if online
@@ -193,6 +202,7 @@ class OfflineFirstDataProvider implements IDataProvider {
       }
     }
 
+    _updatePendingCount();
     _isSyncing.value = false;
     Get.log('✅ Sync complete: $successCount success, $failCount failed');
 

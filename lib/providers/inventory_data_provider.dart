@@ -21,11 +21,23 @@ class InventoryDataProvider implements IDataProvider {
   Future<List<StockItem>> fetchStockItems() async {
     try {
       // Try to fetch from Supabase
+      Get.log('Fetching stock items from Supabase...');
       final items = await _supabaseService.getStockItems();
+      Get.log('DEBUG: Supabase returned ${items.length} items');
       
-      // Cache the result in Hive
-      await _hiveService.cacheStockItems(items);
-      Get.log('Stock items fetched from Supabase and cached locally');
+      // IMPORTANT: Only cache if we got data, don't overwrite cache with empty data
+      if (items.isNotEmpty) {
+        await _hiveService.cacheStockItems(items);
+        Get.log('Stock items fetched from Supabase and cached locally');
+      } else {
+        Get.log('⚠️ WARNING: Supabase returned 0 items, NOT overwriting cache');
+        // Check if we have cached data to return instead
+        final cachedItems = await _hiveService.getStockItems();
+        if (cachedItems.isNotEmpty) {
+          Get.log('Returning ${cachedItems.length} items from cache instead');
+          return cachedItems;
+        }
+      }
       
       return items;
     } catch (e) {
