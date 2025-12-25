@@ -92,7 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               // Premium Header
-              _buildPremiumHeader(user, isAnonymous),
+              _buildPremiumHeader(context, user, isAnonymous),
               
               const SizedBox(height: 20),
 
@@ -399,9 +399,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildPremiumHeader(dynamic user, bool isAnonymous) {
+  Widget _buildPremiumHeader(BuildContext context, dynamic user, bool isAnonymous) {
     // Inject controller if not already
     final ProfileController profileController = Get.put(ProfileController());
+    final bool canPop = Navigator.canPop(context);
 
     return Obx(() {
       final profile = profileController.userProfile.value;
@@ -424,6 +425,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Column(
           children: [
+            if (canPop)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: InkWell(
+                    onTap: () => Get.back(),
+                    borderRadius: BorderRadius.circular(50),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: AppTheme.textPrimary,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             // Avatar with gradient border
             Container(
               padding: const EdgeInsets.all(4),

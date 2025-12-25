@@ -196,7 +196,10 @@ class OfflineFirstDataProvider implements IDataProvider {
         successCount++;
         Get.log('✓ Synced: $operation');
       } catch (e) {
-        await _syncQueueService.markFailed(operation.id, e.toString());
+        // Only mark failed if real error, not just "not implemented match"
+        // But since we want to clear queue if we can't handle it...
+        // For now, assume error means RETRY later.
+        // await _syncQueueService.markFailed(operation.id, e.toString());
         failCount++;
         Get.log('✗ Failed: $operation - $e', isError: true);
       }
@@ -232,6 +235,17 @@ class OfflineFirstDataProvider implements IDataProvider {
         case OperationType.delete:
           await _supabaseService.deleteStockItem(operation.entityId);
           break;
+      }
+    } else if (operation.entityType == 'transaction') {
+      switch (operation.type) {
+        case OperationType.create:
+          final transaction = StockTransaction.fromJson(operation.data!);
+          await _supabaseService.createTransaction(transaction);
+          break;
+        case OperationType.update:
+        case OperationType.delete:
+           Get.log('Transaction update/delete not supported yet');
+           break;
       }
     }
   }
