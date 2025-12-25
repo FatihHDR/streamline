@@ -7,6 +7,8 @@ import '../utils/app_theme.dart';
 import '../widgets/animation_mode_selector.dart';
 import '../widgets/network_mode_selector.dart';
 import '../experiments/controllers/experiment_controller.dart';
+import '../modules/profile/controllers/profile_controller.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -132,7 +134,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ),
-                  if (!isAnonymous)
+                  if (!isAnonymous) ...[
+                    _buildListTile(
+                      icon: Icons.edit_rounded,
+                      iconColor: AppTheme.primaryColor,
+                      title: 'Edit Profil',
+                      subtitle: 'Ubah nama dan avatar',
+                      onTap: () {
+                         HapticFeedback.lightImpact();
+                         Get.to(() => const EditProfileScreen());
+                      },
+                    ),
                     _buildListTile(
                       icon: Icons.email_rounded,
                       iconColor: Colors.blue,
@@ -140,6 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       subtitle: user?.email ?? 'Not set',
                       onTap: null,
                     ),
+                  ],
                   _buildListTile(
                     icon: Icons.badge_rounded,
                     iconColor: Colors.purple,
@@ -387,126 +400,140 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildPremiumHeader(dynamic user, bool isAnonymous) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Avatar with gradient border
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              gradient: AppTheme.accentGradient,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
+    // Inject controller if not already
+    final ProfileController profileController = Get.put(ProfileController());
+
+    return Obx(() {
+      final profile = profileController.userProfile.value;
+      final displayName = profile?.fullName ?? user?.email?.split('@')[0] ?? 'User';
+      final avatarUrl = profile?.avatarUrl;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Avatar with gradient border
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                gradient: AppTheme.accentGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
+                child: CircleAvatar(
+                  radius: 45,
+                  backgroundColor: AppTheme.surfaceColor,
+                  backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty) 
+                      ? NetworkImage(avatarUrl) 
+                      : null,
+                  child: (isAnonymous || (avatarUrl == null || avatarUrl.isEmpty))
+                      ? (isAnonymous
+                          ? const Icon(
+                              Icons.person_rounded,
+                              size: 45,
+                              color: AppTheme.textMuted,
+                            )
+                          : Text(
+                              (displayName.isNotEmpty ? displayName[0] : 'U').toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ))
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Name and Badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  isAnonymous ? 'Guest User' : displayName,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (!isAnonymous)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'PRO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                if (isAnonymous)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.textMuted.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'GUEST',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
               ],
             ),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: CircleAvatar(
-                radius: 45,
-                backgroundColor: AppTheme.surfaceColor,
-                child: isAnonymous
-                    ? const Icon(
-                        Icons.person_rounded,
-                        size: 45,
-                        color: AppTheme.textMuted,
-                      )
-                    : Text(
-                        (user?.email ?? 'U')[0].toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                        ),
-                      ),
+            const SizedBox(height: 4),
+            Text(
+              isAnonymous ? 'Sign in to sync your data' : (user?.email ?? ''),
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Name and Badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                isAnonymous ? 'Guest User' : (user?.email?.split('@')[0] ?? 'User'),
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (!isAnonymous)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'PRO',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              if (isAnonymous)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppTheme.textMuted.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'GUEST',
-                    style: TextStyle(
-                      color: AppTheme.textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            isAnonymous ? 'Sign in to sync your data' : (user?.email ?? ''),
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textMuted,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildSection(String title, List<Widget> children) {
