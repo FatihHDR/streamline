@@ -14,6 +14,7 @@ import 'models/stock_transaction.dart';
 import 'models/pending_operation.dart';
 import 'models/notification_item.dart';
 import 'modules/location/models/location_data.dart';
+import 'modules/location/models/warehouse_model.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -69,6 +70,7 @@ void main() async {
       Hive.registerAdapter(LocationDataAdapter());
       Hive.registerAdapter(LocationExperimentAdapter());
       Hive.registerAdapter(NotificationItemAdapter());
+      Hive.registerAdapter(WarehouseAdapter());
       
       // Initialize Supabase
       debugPrint('⚡ [MAIN] Initializing Supabase...');
