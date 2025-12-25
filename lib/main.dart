@@ -83,13 +83,8 @@ void main() async {
       // Initialize auth service (temporary: auto sign-in anonymously for verification)
       debugPrint('🔐 [MAIN] Initializing AuthService...');
       final authService = Get.put(AuthService());
-      // Temporary: sign in anonymously to validate Supabase queries that rely on auth
-      try {
-        await authService.signInAnonymously();
-        debugPrint('⚡ [MAIN] Anonymous sign-in OK: ${authService.currentUser.value?.id}');
-      } catch (e) {
-        debugPrint('⚠️ [MAIN] Anonymous sign-in failed: $e');
-      }
+      // Auth state will be handled by AuthService and preserved session
+      debugPrint('⚡ [MAIN] AuthService initialized');
       
       // Initialize preferences service
       debugPrint('⚙️ [MAIN] Initializing PreferencesService...');

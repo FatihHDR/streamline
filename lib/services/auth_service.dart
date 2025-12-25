@@ -76,20 +76,37 @@ class AuthService extends GetxController {
     }
   }
   
-  /// Sign in with Google
+  /// Sign in with Google (Native)
   Future<void> signInWithGoogle() async {
     try {
-      // Use Supabase hosted OAuth flow
-      await _client.auth.signInWithOAuth(
-        OAuthProvider.google,  // ✅ Perbaikan: OAuthProvider bukan Provider
-        redirectTo: 'com.example.streamline://login-callback',  // ✅ Perbaikan: redirectTo langsung sebagai parameter
+      // 1. Native Google Sign In
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        Get.log('Google Sign In canceled by user');
+        return; // User canceled
+      }
+
+      // 2. Get authentication details (idToken)
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw 'No ID Token found. Make sure you configured Web OAuth Client ID in Google Cloud Console and passed it to GoogleSignIn(serverClientId: ...) if needed.';
+      }
+
+      // 3. Authenticate with Supabase using ID Token
+      final response = await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
       );
 
-      // If a session is returned immediately (web), update the user.
-      currentUser.value = _client.auth.currentSession?.user;
-      Get.log('Triggered Supabase hosted Google OAuth');
+      currentUser.value = response.user;
+      Get.log('Signed in with Google (Native): ${response.user?.email}');
     } catch (e) {
-      Get.log('Failed to trigger Supabase hosted Google OAuth: $e', isError: true);
+      Get.log('Failed to sign in with Google: $e', isError: true);
+      // Fallback or rethrow
       rethrow;
     }
   }
