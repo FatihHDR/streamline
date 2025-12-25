@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../services/auth_service.dart';
 import '../services/preferences_service.dart';
@@ -69,90 +70,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Set system UI style for transparent status bar
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+
     final authService = Get.find<AuthService>();
     final prefsService = Get.find<PreferencesService>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      backgroundColor: AppTheme.backgroundColor,
       body: Obx(() {
         final user = authService.currentUser.value;
         final isAnonymous = user?.isAnonymous ?? true;
 
         return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // Header Section
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.05),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Avatar
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2), width: 2),
-                      ),
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        child: isAnonymous
-                            ? const Icon(
-                                Icons.person_outline,
-                                size: 50,
-                                color: AppTheme.primaryColor,
-                              )
-                            : Text(
-                                (user?.email ?? 'U')[0].toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // User Name/Email
-                    Text(
-                      isAnonymous ? 'Guest User' : user?.email ?? 'Unknown',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isAnonymous ? AppTheme.textMuted : AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isAnonymous ? 'Anonymous' : 'Registered',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
+              // Premium Header
+              _buildPremiumHeader(user, isAnonymous),
+              
+              const SizedBox(height: 20),
 
               // Account Section
               _buildSection(
@@ -160,10 +100,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 [
                   if (isAnonymous)
                     _buildListTile(
-                      icon: Icons.person_add,
+                      icon: Icons.person_add_rounded,
+                      iconColor: Colors.blue,
                       title: 'Create Account',
                       subtitle: 'Sign up to save your data',
                       onTap: () {
+                        HapticFeedback.lightImpact();
                         Get.dialog(
                           AlertDialog(
                             title: const Text('Create Account'),
@@ -192,38 +134,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   if (!isAnonymous)
                     _buildListTile(
-                      icon: Icons.email,
+                      icon: Icons.email_rounded,
+                      iconColor: Colors.blue,
                       title: 'Email',
                       subtitle: user?.email ?? 'Not set',
                       onTap: null,
                     ),
                   _buildListTile(
-                    icon: Icons.badge,
+                    icon: Icons.badge_rounded,
+                    iconColor: Colors.purple,
                     title: 'User ID',
                     subtitle: () {
                       final userId = user?.id ?? 'Unknown';
                       return userId.length > 8 ? '${userId.substring(0, 8)}...' : userId;
                     }(),
                     onTap: () {
+                      HapticFeedback.lightImpact();
                       Get.snackbar(
                         'User ID',
                         user?.id ?? 'Unknown',
                         snackPosition: SnackPosition.BOTTOM,
                         duration: const Duration(seconds: 3),
+                        backgroundColor: AppTheme.surfaceColor,
+                        colorText: AppTheme.textPrimary,
+                        margin: const EdgeInsets.all(16),
                       );
                     },
                   ),
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // Preferences Section
               _buildSection(
                 'Preferences',
                 [
                   Obx(() => _buildListTile(
-                        icon: Icons.animation,
+                        icon: Icons.animation_rounded,
+                        iconColor: Colors.orange,
                         title: 'Animation Mode',
                         subtitle: prefsService.animationMode.value == 'animated_container'
                             ? 'AnimatedContainer'
@@ -231,18 +180,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         trailing: Switch(
                           value: prefsService.animationMode.value == 'animation_controller',
                           onChanged: (value) {
+                            HapticFeedback.lightImpact();
                             prefsService.setAnimationMode(
                               value ? 'animation_controller' : 'animated_container',
                             );
                           },
                           activeColor: AppTheme.primaryColor,
                         ),
-                        onTap: null,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          prefsService.setAnimationMode(
+                            prefsService.animationMode.value == 'animated_container'
+                                ? 'animation_controller'
+                                : 'animated_container',
+                          );
+                        },
                       )),
                   Obx(() {
                     final lastSync = prefsService.lastSyncTime.value;
                     return _buildListTile(
-                      icon: Icons.sync,
+                      icon: Icons.sync_rounded,
+                      iconColor: Colors.teal,
                       title: 'Last Sync',
                       subtitle: lastSync != null
                           ? prefsService.getTimeSinceLastSync()
@@ -253,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // Settings Section
               _buildSection(
@@ -261,224 +219,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 [
                   _buildListTile(
                     icon: Icons.tune_rounded,
-                    title: 'Animation Mode',
-                    subtitle: 'Configure animation settings',
+                    iconColor: Colors.indigo,
+                    title: 'Animation Settings',
+                    subtitle: 'Configure animation details',
                     onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
-                        builder: (context) => Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 12),
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.textMuted.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Animation Settings',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surfaceColor,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Mode Animasi',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppTheme.textPrimary,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Pilih jenis animasi yang digunakan',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Obx(() {
-                                            final prefsService = Get.find<PreferencesService>();
-                                            final currentMode = prefsService.animationMode.value == 'animated_container'
-                                                ? AnimationMode.animatedContainer
-                                                : AnimationMode.animationController;
-                                            return AnimationModeSelector(
-                                              currentMode: currentMode,
-                                              onModeChanged: (mode) async {
-                                                Navigator.pop(context);
-                                                final modeString = mode == AnimationMode.animatedContainer
-                                                    ? 'animated_container'
-                                                    : 'animation_controller';
-                                                await prefsService.setAnimationMode(modeString);
-                                              },
-                                            );
-                                          }),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                      HapticFeedback.lightImpact();
+                      _showAnimationSettings(context);
                     },
                   ),
                   _buildListTile(
-                    icon: Icons.network_check,
+                    icon: Icons.network_check_rounded,
+                    iconColor: Colors.green,
                     title: 'Network Test',
                     subtitle: 'Test HTTP request performance',
                     onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: Colors.transparent,
-                        isScrollControlled: true,
-                        builder: (context) => Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 12),
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.textMuted.withOpacity(0.3),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Network Test',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surfaceColor,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Mode Network',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: AppTheme.textPrimary,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Pilih library untuk HTTP request',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textMuted,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          NetworkModeSelector(
-                                            currentMode: _networkMode,
-                                            onModeChanged: (m) {
-                                              setState(() => _networkMode = m);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          _testNetworkMode();
-                                        },
-                                        icon: const Icon(Icons.speed_rounded, size: 20),
-                                        label: const Text('Test Network'),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                      HapticFeedback.lightImpact();
+                      _showNetworkSettings(context);
                     },
                   ),
                   _buildListTile(
-                    icon: Icons.bug_report,
+                    icon: Icons.bug_report_rounded,
+                    iconColor: Colors.red,
                     title: 'Debug Supabase Sync',
                     subtitle: 'Diagnose sync issues',
                     onTap: () {
+                      HapticFeedback.lightImpact();
                       Get.toNamed('/debug-sync');
                     },
                   ),
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // About Section
               _buildSection(
                 'About',
                 [
                   _buildListTile(
-                    icon: Icons.info_outline,
+                    icon: Icons.info_outline_rounded,
+                    iconColor: Colors.blueGrey,
                     title: 'App Version',
                     subtitle: '1.0.0',
                     onTap: null,
                   ),
                   _buildListTile(
-                    icon: Icons.code,
+                    icon: Icons.code_rounded,
+                    iconColor: Colors.blueGrey,
                     title: 'Built with',
                     subtitle: 'Flutter & Supabase',
                     onTap: null,
@@ -486,20 +273,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Logout Button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
+                  height: 56,
+                  child: ElevatedButton(
                     onPressed: () {
+                      HapticFeedback.mediumImpact();
                       Get.dialog(
                         AlertDialog(
                           title: const Text('Logout'),
                           content: const Text('Are you sure you want to logout?'),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           actions: [
                             TextButton(
                               onPressed: () => Get.back(),
@@ -512,6 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
                               ),
                               child: const Text('Logout'),
                             ),
@@ -519,50 +309,203 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.logout),
-                    label: const Text(
-                      'Logout',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.dangerColor,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(color: AppTheme.dangerColor.withOpacity(0.2)),
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.logout_rounded, color: AppTheme.dangerColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Log Out',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.dangerColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
               // Logo Footer
-              ClipOval(
-                child: Image.asset(
-                  'lib/widgets/assets/streamline_logo.png',
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
+              Opacity(
+                opacity: 0.5,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                            color: Colors.white, shape: BoxShape.circle),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: 24,
+                            height: 24,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, o, s) => const Icon(Icons.grid_view_rounded, size: 24, color: AppTheme.primaryColor),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Streamline v1.0.0',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Streamline',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
             ],
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildPremiumHeader(dynamic user, bool isAnonymous) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Avatar with gradient border
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              gradient: AppTheme.accentGradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: CircleAvatar(
+                radius: 45,
+                backgroundColor: AppTheme.surfaceColor,
+                child: isAnonymous
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 45,
+                        color: AppTheme.textMuted,
+                      )
+                    : Text(
+                        (user?.email ?? 'U')[0].toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Name and Badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                isAnonymous ? 'Guest User' : (user?.email?.split('@')[0] ?? 'User'),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (!isAnonymous)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'PRO',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              if (isAnonymous)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppTheme.textMuted.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'GUEST',
+                    style: TextStyle(
+                      color: AppTheme.textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            isAnonymous ? 'Sign in to sync your data' : (user?.email ?? ''),
+            style: TextStyle(
+              fontSize: 14,
+              color: AppTheme.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -573,12 +516,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey,
-              letterSpacing: 0.5,
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textMuted.withOpacity(0.7),
+              letterSpacing: 1.2,
             ),
           ),
         ),
@@ -586,12 +529,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -603,36 +546,250 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildListTile({
     required IconData icon,
+    required Color iconColor,
     required String title,
     required String subtitle,
     Widget? trailing,
     VoidCallback? onTap,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (trailing != null) trailing,
+              if (trailing == null && onTap != null)
+                Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted.withOpacity(0.5)),
+            ],
+          ),
         ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 20),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
+    );
+  }
+
+  void _showAnimationSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Animation Settings',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mode Animasi',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Pilih jenis animasi yang digunakan',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Obx(() {
+                          final prefsService = Get.find<PreferencesService>();
+                          final currentMode = prefsService.animationMode.value == 'animated_container'
+                              ? AnimationMode.animatedContainer
+                              : AnimationMode.animationController;
+                          return AnimationModeSelector(
+                            currentMode: currentMode,
+                            onModeChanged: (mode) async {
+                              Navigator.pop(context);
+                              final modeString = mode == AnimationMode.animatedContainer
+                                  ? 'animated_container'
+                                  : 'animation_controller';
+                              await prefsService.setAnimationMode(modeString);
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: Colors.grey[600],
-          fontSize: 13,
+    );
+  }
+
+  void _showNetworkSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Network Settings',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mode Network',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Pilih library untuk HTTP request',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        NetworkModeSelector(
+                          currentMode: _networkMode,
+                          onModeChanged: (m) {
+                            setState(() => _networkMode = m);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _testNetworkMode();
+                      },
+                      icon: const Icon(Icons.speed_rounded, size: 20),
+                      label: const Text('Test Network'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-      trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right) : null),
-      onTap: onTap,
     );
   }
 }
+
