@@ -298,6 +298,11 @@ class OfflineFirstDataProvider implements IDataProvider {
     };
   }
 
+  /// Refresh pending count (call externally after clearing queue)
+  void refreshPendingCount() {
+    _updatePendingCount();
+  }
+
   /// Dispose resources
   void dispose() {
     _connectivitySubscription?.cancel();

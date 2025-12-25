@@ -4,6 +4,7 @@ import '../utils/debug_supabase.dart';
 import '../services/hive_service.dart';
 import '../services/sync_queue_service.dart';
 import '../providers/inventory_provider.dart';
+import '../providers/offline_first_data_provider.dart';
 import '../modules/inventory/controllers/inventory_controller.dart';
 
 /// Debug screen untuk testing Supabase sync
@@ -153,6 +154,15 @@ class _DebugSyncScreenState extends State<DebugSyncScreen> {
       
       _addLog('Found $pendingCount pending operations');
       await syncQueueService.clearAll();
+      
+      // Refresh the provider's pending count
+      try {
+        final provider = Get.find<OfflineFirstDataProvider>();
+        provider.refreshPendingCount();
+        _addLog('Provider pending count refreshed');
+      } catch (e) {
+        _addLog('⚠️ Could not refresh provider: $e');
+      }
       
       _addLog('✅ Pending queue cleared!');
       _addLog('"X pending" status should disappear now');
