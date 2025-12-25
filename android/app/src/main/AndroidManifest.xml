@@ -12,6 +12,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     
+
+    <!-- <activity android:name=".MainActivity" android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW"/>
+            <category android:name="android.intent.category.DEFAULT"/>
+            <category android:name="android.intent.category.BROWSABLE"/>
+            <data android:scheme="com.example.streamline" android:host="login-callback"/>
+        </intent-filter>
+    </activity> -->
+
     <application
         android:label="streamline"
         android:name="${applicationName}"

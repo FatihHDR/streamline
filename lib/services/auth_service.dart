@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -14,11 +16,7 @@ class AuthService extends GetxController {
     super.onInit();
     currentUser.value = _client.auth.currentUser;
     
-    // Initialize Google Sign-In
-    _googleSignIn = GoogleSignIn(
-      clientId: dotenv.env['GOOGLE_CLIENT_ID'],
-      serverClientId: dotenv.env['GOOGLE_CLIENT_ID'],
-    );
+    // Using Supabase hosted OAuth flow instead of native GoogleSignIn
     
     // Listen to auth state changes
     _client.auth.onAuthStateChange.listen((data) {
@@ -83,35 +81,21 @@ class AuthService extends GetxController {
   /// Sign in with Google
   Future<void> signInWithGoogle() async {
     try {
-      // Sign in with Google
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        throw Exception('Google sign-in cancelled');
-      }
-
-      // Get Google authentication
-      final googleAuth = await googleUser.authentication;
-      final accessToken = googleAuth.accessToken;
-      final idToken = googleAuth.idToken;
-
-      if (accessToken == null) {
-        throw Exception('No Access Token found');
-      }
-      if (idToken == null) {
-        throw Exception('No ID Token found');
-      }
-
-      // Sign in to Supabase with Google credentials
-      final response = await _client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
+      // Use Supabase hosted OAuth flow. This will open the browser
+      // and redirect to the Supabase callback URL after sign-in.
+      final res = await _client.auth.signInWithOAuth(
+        Provider.google,
+        options: AuthOptions(
+          // Your Supabase callback URL
+          redirectTo: 'https://cfmdytkgeedbuddexiwt.supabase.co/auth/v1/callback',
+        ),
       );
 
-      currentUser.value = response.user;
-      Get.log('Signed in with Google: ${response.user?.email}');
+      // If a session is returned immediately (web), update the user.
+      currentUser.value = res.session?.user;
+      Get.log('Triggered Supabase hosted Google OAuth');
     } catch (e) {
-      Get.log('Failed to sign in with Google: $e', isError: true);
+      Get.log('Failed to trigger Supabase hosted Google OAuth: $e', isError: true);
       rethrow;
     }
   }
