@@ -35,7 +35,7 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       final data = await _client
-          .from('public.profiles')
+          .from('profiles')
           .select()
           .eq('id', user.id)
           .maybeSingle();
@@ -71,7 +71,7 @@ class ProfileController extends GetxController {
       };
 
       final response = await _client
-          .from('public.profiles')
+          .from('profiles')
           .upsert(updates)
           .select()
           .single();
