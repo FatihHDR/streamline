@@ -1,13 +1,5 @@
 # Streamline - Aplikasi Manajemen Stok Gudang
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Streamline-Warehouse%20Management-5F6C7B?style=for-the-badge" alt="Streamline Badge"/>
-  <br/>
-  <p><i>Modern warehouse inventory management with beautiful animations</i></p>
-</div>
-
-# Streamline - Aplikasi Manajemen Stok Gudang
-
 <p align="center">
   <img src="assets/images/logo.png" alt="Streamline Logo" width="120" height="120"/>
 </p>
